@@ -19,7 +19,8 @@ const styles = StyleSheet.create({
 */
 
 // index.tsx
-import { agregarHistoriaClinica, eliminarHistoriaClinica, initDatabaseHistoriaClinica, obtenerHistoriasClinicas } from '@/db/historia_clinica_service';
+import { agregarHistoriaClinica, eliminarHistoriaClinica, obtenerHistoriasClinicas } from '@/db/historia_clinica_service';
+import { initDatabases } from '@/db/init_databases';
 import { HistoriaClinicaComunResult, HistoriaClinicaListadoModel } from '@/models/historia_clinica_model';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Button, FlatList, StyleSheet, Text, View } from 'react-native';
@@ -31,6 +32,7 @@ const HistoriaClinicaTestScreen: React.FC = () => {
   const [eliminando, setEliminando] = useState<number | null>(null);
 
   useEffect(() => {
+    initDatabases();
     cargarListado();
   }, []);
 
@@ -38,9 +40,6 @@ const HistoriaClinicaTestScreen: React.FC = () => {
     try {
       setCargando(true);
       setError(null);
-      
-      // Inicializar la base de datos primero
-      await initDatabaseHistoriaClinica();
       
       // Obtener el listado
       const resultado = await obtenerHistoriasClinicas();
