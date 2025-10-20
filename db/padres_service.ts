@@ -15,6 +15,7 @@ export const initDatabasePadres = async() => {
                 FOREIGN KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
             )
         `)
+        console.log("Tabla padres ✅")
 
     } catch (error) {
         console.error("Error al inicializar la base de datos de padres")

@@ -5,11 +5,13 @@ import { initDatabasePariente } from "./pariente_service";
 export const initDatabases = async () => {
     try {
 
+        console.log("Inicializando tablas...")
+
         await initDatabaseHistoriaClinica();
         await initDatabasePariente();
         await initDatabasePadres();
 
-        console.log("Bases de datos inicializadas con exito.")
+        console.log("Bases de datos inicializada con exito.")
 
     } catch (error) {
         console.error("Error al inicializar las tablas: ", error)

@@ -14,6 +14,7 @@ export const initDatabasePariente = async () => {
                 FOREIGN KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
             );
         `);
+        console.log("Tabla pariente ✅")
         
     } catch (error) {
         console.log('Error inicializando la base de datos en hijo_service.ts.')

@@ -59,7 +59,7 @@ export const initDatabaseHistoriaClinica = async () => {
             );
         `);
 
-        console.log('Base de datos de historia clinica inicializada correctamente.')
+        console.log('Tabla historia_clinica ✅')
 
     } catch (error) {
         console.log('Error inicializando la base de datos en historia_clinica_service.ts.')
