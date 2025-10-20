@@ -10,7 +10,8 @@ export const initDatabasePariente = async () => {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nota TEXT NOT NULL,
                 tipo TEXT NOT NULL,
-                FOREING KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
+                historia_clinica_comun_id INTEGER NOT NULL,
+                FOREIGN KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
             );
         `);
         

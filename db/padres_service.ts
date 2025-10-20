@@ -11,7 +11,8 @@ export const initDatabasePadres = async() => {
                 vive INTEGER NOT NULL,
                 fallecimiento TEXT,
                 enfermedad TEXT,
-                FOREING KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
+                historia_clinica_comun_id INTEGER NOT NULL,
+                FOREIGN KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
             )
         `)
 
@@ -32,7 +33,8 @@ export const agregarPadre = async (
             INSERT INTO padres (
                 vive,
                 fallecimiento,
-                enfermedad
+                enfermedad,
+                historia_clinica_comun_id
             ) VALUES (?, ?, ?)    
         `,
             [
