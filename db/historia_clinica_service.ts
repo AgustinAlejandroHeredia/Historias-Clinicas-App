@@ -4,7 +4,7 @@ import { openDatabase } from './database';
 export const initDatabaseHistoriaClinica = async () => {
     try {
 
-        const db = openDatabase();
+        const db = await openDatabase();
         (await db).execAsync(`
             CREATE TABLE IF NOT EXISTS historia_clinica_comun (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +50,7 @@ export const initDatabaseHistoriaClinica = async () => {
 
                 obra_social TEXT NOT NULL,
                 material_casa TEXT NOT NULL,
-                electicidad INTEGER DEFAULT 1,
+                electricidad INTEGER DEFAULT 1,
                 agua INTEGER DEFAULT 1,
                 toilet_privado INTEGER DEFAULT 1,
                 calefaccion TEXT NOT NULL,
@@ -106,7 +106,7 @@ export const agregarHistoriaClinica = async (
                 h_farmacos,
                 obra_social, 
                 material_casa, 
-                electicidad, 
+                electricidad, 
                 agua, 
                 toilet_privado, 
                 calefaccion, 
@@ -147,7 +147,7 @@ export const agregarHistoriaClinica = async (
                 historiaData.h_farmacos,
                 historiaData.obra_social,
                 historiaData.material_casa,
-                historiaData.electicidad ? 1 : 0,
+                historiaData.electricidad ? 1 : 0,
                 historiaData.agua ? 1 : 0,
                 historiaData.toilet_privado ? 1 : 0,
                 historiaData.calefaccion,
@@ -179,7 +179,7 @@ export const obtenerHistoriasClinicas = async (): Promise<HistoriaClinicaComunLi
             'SELECT id, fecha_creacion, nombre, motivo_consulta FROM historia_clinica_comun ORDER BY fecha_creacion DESC'
         )
 
-        console.log("Exito al obtener listado de historias clinicas comunes (presentacion index).")
+        console.log("historia_clinica_servise : Exito al obtener listado de historias clinicas comunes (presentacion index).")
 
         return {
             success: true,
@@ -188,7 +188,7 @@ export const obtenerHistoriasClinicas = async (): Promise<HistoriaClinicaComunLi
         }
 
     } catch (error) {
-        console.error("Error al obtener el listado de las historias clinicas: ", error)
+        console.error("historia_clinica_service : Error al obtener el listado de las historias clinicas: ", error)
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error',
@@ -249,7 +249,7 @@ export const obtenerHistoriaClinicaCompletaPorId = async (id:number): Promise<Hi
             h_farmacos: historia.h_farmacos,
             obra_social: historia.obra_social,
             material_casa: historia.material_casa,
-            electicidad: historia.electicidad === 1,
+            electricidad: historia.electricidad === 1,
             agua: historia.agua === 1,
             toilet_privado: historia.toilet_privado === 1,
             calefaccion: historia.calefaccion,
@@ -305,3 +305,31 @@ export const eliminarHistoriaClinica = async (id:number): Promise<HistoriaClinic
         }
     }
 }
+
+export const siguienteId_old = async (): Promise<number> => {
+    try {
+        const db = await openDatabase()
+        const result = await db.getFirstAsync('SELECT last_insert_rowid() as last_id') as any
+        return (result?.last_id) + 1 || 0
+    } catch (error) {
+        console.error("Error al obtener el ultimo id de historias clinicas.")
+        return 0
+    }
+}
+
+export const siguienteId = async (): Promise<number> => {
+  try {
+    const db = await openDatabase();
+
+    const result = await db.getFirstAsync<{ last_id: number }>(
+      'SELECT MAX(id) as last_id FROM historia_clinica_comun'
+    );
+
+    // Si no hay registros, MAX(id) será NULL, así que usamos 0 como base
+    const lastId = result?.last_id ?? 0;
+    return lastId + 1;
+  } catch (error) {
+    console.error("Error al obtener el siguiente ID de historias clínicas:", error);
+    return -1; // Retorna -1 en caso de error
+  }
+};

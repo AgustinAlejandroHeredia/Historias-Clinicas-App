@@ -4,7 +4,7 @@ import { openDatabase } from './database';
 export const initDatabasePariente = async () => {
     try {
 
-        const db = openDatabase();
+        const db = await openDatabase();
         (await db).execAsync(`
             CREATE TABLE IF NOT EXISTS pariente (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

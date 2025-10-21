@@ -1,21 +1,57 @@
+import { obtenerHistoriasClinicas } from "@/db/historia_clinica_service";
 import { initDatabases } from "@/db/init_databases";
 import { HistoriaClinicaListadoModel } from "@/models/historia_clinica_model";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Index() {
 
+  const router = useRouter()
+
   const [listadoHistorias, setListadoHistorias] = useState<HistoriaClinicaListadoModel[]>([])
+  const [busqueda, setBusqueda] = useState('');
 
 
 
 
 
   useEffect(() => {
-    initDatabases()
+    const initialize = async () => {
+      try {
+        //await resetDatabase() // debug only
+        await initDatabases()
+        await cargarListado()
+      }catch (error) {
+        console.error("index : Error inicializando las tablas. ❌")
+      }
+    }
+    initialize()
   }, []);
 
-  //asd
+  const cargarListado = async (): Promise<void> => {
+    try {
+
+      const respuesta = await obtenerHistoriasClinicas();
+      if(respuesta.success && respuesta.data){
+        setListadoHistorias(respuesta.data)
+        console.log("index : ✅ historias cargadas con exito.")
+      }else{
+        console.error("index : ❌ respuesta invalida al cargar listado.")
+      }
+
+    } catch (error) {
+      console.error("index : ❌ Error al cargar listado de historias clinicas.")
+    }
+  }
+
+  const seleccionDeHistoria = (id: number) => {
+    router.push(`/view?id=${id}`)
+  }
+
+  const handleNueva = () => {
+    router.push("/create")
+  };
 
 
 
@@ -23,7 +59,39 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <Text> View de las historias clinicas que existan </Text>
+
+      <View style={styles.row}>
+        <TouchableOpacity style={styles.botonNueva} onPress={handleNueva}>
+          <Text style={styles.botonText}>+ Nueva</Text>
+        </TouchableOpacity>
+
+        <TextInput
+          style={styles.busqueda}
+          placeholder="Buscar..."
+          value={busqueda}
+          onChangeText={setBusqueda}
+        />
+      </View>
+
+      <FlatList
+        data={listadoHistorias}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.card} onPress={() => seleccionDeHistoria(item.id)}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.fecha}>{item.fecha_creacion}</Text>
+              <Text style={styles.nombre}>{item.nombre}</Text>
+            </View>
+            <Text style={styles.descripcion}>{item.motivo_consulta}</Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No hay historias clínicas cargadas.</Text>
+          </View>
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 }
@@ -37,6 +105,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f5f5f5',
+  },
+  emptyContainer: {
+    marginTop: 50,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#777',
   },
   titulo: {
     fontSize: 24,

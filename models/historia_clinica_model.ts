@@ -43,7 +43,7 @@ export interface HistoriaClinicaComunModel {
     
     obra_social: string;
     material_casa: string;
-    electicidad: boolean;
+    electricidad: boolean;
     agua: boolean;
     toilet_privado: boolean;
     calefaccion: string;
@@ -86,7 +86,7 @@ export interface HistoriaClinicaComunSQLResult {
     h_farmacos: string;
     obra_social: string;
     material_casa: string;
-    electicidad: number;
+    electricidad: number;
     agua: number;
     toilet_privado: number;
     calefaccion: string;
@@ -94,18 +94,18 @@ export interface HistoriaClinicaComunSQLResult {
     otro: string;
 }
 
-export interface HistoriaClinicaListadoModel {
-    id: number;
-    fecha_creacion?: string;
-    nombre: string;
-    motivo_consulta: string;
-}
-
 export interface HistoriaClinicaComunResult extends DatabaseResult {
     data?: HistoriaClinicaComunModel | HistoriaClinicaComunModel[];
     id?: number;
     changes?: number;
     message?: string;
+}
+
+export interface HistoriaClinicaListadoModel {
+    id: number;
+    fecha_creacion?: string;
+    nombre: string;
+    motivo_consulta: string;
 }
 
 export interface HistoriaClinicaComunListadoResult extends DatabaseResult {

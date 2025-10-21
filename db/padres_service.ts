@@ -4,7 +4,7 @@ import { openDatabase } from './database';
 export const initDatabasePadres = async() => {
     try {
 
-        const db = openDatabase();
+        const db = await openDatabase();
         (await db).execAsync(`
             CREATE TABLE IF NOT EXISTS padres (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +45,7 @@ export const agregarPadre = async (
                 padreData.historia_clinica_comun_id
             ]
         );
-        console.log("Padre agregado exitosamente a la historia con id ", )
+        console.log("Padre agregado exitosamente a la historia con id ", result.lastInsertRowId)
         return {
             success: true,
             id: result.lastInsertRowId
