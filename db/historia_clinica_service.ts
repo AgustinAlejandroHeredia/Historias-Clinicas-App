@@ -315,31 +315,3 @@ export const eliminarHistoriaClinica = async (id:number): Promise<HistoriaClinic
         }
     }
 }
-
-export const siguienteId_old = async (): Promise<number> => {
-    try {
-        const db = await openDatabase()
-        const result = await db.getFirstAsync('SELECT last_insert_rowid() as last_id') as any
-        return (result?.last_id) + 1 || 0
-    } catch (error) {
-        console.error("Error al obtener el ultimo id de historias clinicas.")
-        return 0
-    }
-}
-
-export const ultimoIdHistoriaClinica = async (): Promise<number> => {
-  try {
-    const db = await openDatabase();
-
-    const result = await db.getFirstAsync<{ last_id: number }>(
-      'SELECT MAX(id) as last_id FROM historia_clinica_comun'
-    );
-
-    // Si no hay registros, MAX(id) será NULL, así que usamos 0 como base
-    const lastId = result?.last_id ?? -1;
-    return lastId;
-  } catch (error) {
-    console.error("Error al obtener el siguiente ID de historias clínicas:", error);
-    return -2; // Retorna -1 en caso de error
-  }
-};

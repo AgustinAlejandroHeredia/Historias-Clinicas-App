@@ -2,7 +2,7 @@ import { BinaryChoice } from "@/components/BinaryChoice";
 import { CustomInput } from "@/components/CustomInput";
 import { DateInput } from "@/components/DateInput";
 import { NumberPicker } from "@/components/NumberPicker";
-import { agregarHistoriaClinica, ultimoIdHistoriaClinica } from "@/db/historia_clinica_service";
+import { agregarHistoriaClinica } from "@/db/historia_clinica_service";
 import { agregarLineaTiempoItem } from "@/db/linea_tiempo_item_service";
 import { agregarPariente } from "@/db/pariente_service";
 import { HistoriaClinicaComunModel, HistoriaClinicaComunResult } from "@/models/historia_clinica_model";
@@ -10,7 +10,7 @@ import { ItemModel } from "@/models/lt_item_model";
 import { ParienteModel } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
 import { Stack, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function CreateScreen() {
@@ -73,7 +73,6 @@ export default function CreateScreen() {
   const [listaItems, setListaItems] = useState<ItemModel[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [nuevoItem, setNuevoItem] = useState({fecha: "", descripcion: ""})
-  const [ultimoId, setUltimoId] = useState<number>(0) // si se lee 0 es que hubo un error
   const [itemIdAux, setItemIdAux] = useState<number>(0)
 
   const [listaHijos, setListaHijos] = useState<ParienteModel[]>([])
@@ -85,60 +84,6 @@ export default function CreateScreen() {
 
 
   // FUNCIONES
-
-  useEffect(() => {
-  const initialize = async () => {
-    try {
-      await obtenerUltimoId();
-    } catch (error) {
-      console.error("create: ❌ Error al obtener el último ID", error);
-    }
-  };
-  initialize();
-}, []);
-
-  const obtenerUltimoId_old = async () => {
-    try {
-      const res = await ultimoIdHistoriaClinica();
-      if (res >= 0) {
-        setUltimoId(res);
-        console.log("create: ultimo ID es", res);
-      } else {
-        console.error("create: ❌ Error al obtener el siguiente id de historia clinica.");
-        // No redirigir automáticamente, mejor mostrar un mensaje
-        alert("Error al inicializar la base de datos. Por favor, reinicie la aplicación.");
-      }
-    } catch (error) {
-      console.error("create: ❌ Error en obtenerUltimoId:", error);
-      throw error; // Propaga el error para manejarlo en el useEffect
-    }
-  };
-
-  // borrar, no se necesita
-  const obtenerUltimoId = async () => {
-    try {
-
-      const res = await ultimoIdHistoriaClinica();
-
-      switch (res) {
-        case -2:
-          console.error("create : ❌ Error en obtenerUltimoId:")
-          alert("Hubo un error leyendo los datos almacenados.")
-          router.push("/")
-          break
-        case -1:
-          setUltimoId(0)
-          break
-        default:
-          setUltimoId(res+1)
-          break
-      }
-
-    } catch (error) {
-      console.error("create: ❌ Error en obtenerUltimoId:", error);
-      throw error; // Propaga el error para manejarlo en el useEffect
-    }
-  }
 
   const handleChange = (campo: keyof typeof formData, valor: string) => {
     setFormData({ ...formData, [campo]: valor });
@@ -195,7 +140,7 @@ export default function CreateScreen() {
         id: itemIdAux,
         fecha: nuevoItem.fecha,
         descripcion: nuevoItem.descripcion,
-        historia_clinica_comun_id: ultimoId
+        historia_clinica_comun_id: -1
       };
       setListaItems([item, ...listaItems])
       setModalVisible(false)
@@ -208,13 +153,6 @@ export default function CreateScreen() {
     setNuevoItem({ fecha:"", descripcion:"" }) // limpia inputs
     setModalVisible(false)
   }
-
-  const renderListaItems = ({ item }: { item: ItemModel }) => (
-    <View style={styles.itemCard}>
-      <Text style={styles.itemFecha}>{item.fecha}</Text>
-      <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
-    </View>
-  )
 
   const cancelarCreacion = () => {
     router.push("/")

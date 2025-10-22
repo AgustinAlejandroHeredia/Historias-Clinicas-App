@@ -1,4 +1,3 @@
-import { resetDatabase } from "@/db/database";
 import { initDatabases } from "@/db/init_databases";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
@@ -11,7 +10,7 @@ export default function RootLayout() {
   useEffect(() => {
     const initializeDB = async () => {
       try {
-        await resetDatabase() // debug only
+        //await resetDatabase() // debug only
         await initDatabases();
         console.log("_layout : Bases de datos inicializadas correctamente. ✅");
         setDbReady(true);
