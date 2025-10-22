@@ -70,6 +70,46 @@ export default function CreateScreen() {
     otro: "",
   });
 
+  const nombresLegibles: Partial<Record<keyof HistoriaClinicaComunModel, string>> = {
+    nombre: "Nombre",
+    dni: "DNI",
+    edad: "Edad",
+    sexo: "Sexo",
+    estado_civil: "Estado civil",
+    l_nacimiento: "Lugar de nacimiento",
+    l_residencia: "Lugar de residencia",
+    ocupacion: "Ocupación",
+    motivo_consulta: "Motivo de consulta",
+    narracion: "Narración",
+    antecedentes_enfermedad: "Antecedentes de enfermedad",
+    alergias: "Alergias",
+    antecedentes_fisiologicos: "Antecedentes fisiológicos",
+    antecedentes_patologicos: "Antecedentes patológicos",
+    antecedentes_quirurgicos: "Antecedentes quirúrgicos",
+    antecedentes_farmacologicos: "Antecedentes farmacológicos",
+    hijos: "Cantidad de hijos",
+    hermanos: "Cantidad de hermanos",
+  };
+
+  const camposObligatorios: (keyof HistoriaClinicaComunModel)[] = [
+    "nombre",
+    "edad",
+    "sexo",
+    "l_nacimiento",
+    "l_residencia",
+    "ocupacion",
+    "motivo_consulta",
+    "narracion",
+    "antecedentes_enfermedad",
+    "alergias",
+    "antecedentes_fisiologicos",
+    "antecedentes_patologicos",
+    "antecedentes_quirurgicos",
+    "antecedentes_farmacologicos",
+    "hijos",
+    "hermanos",
+  ];
+
   const [listaItems, setListaItems] = useState<ItemModel[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [nuevoItem, setNuevoItem] = useState({fecha: "", descripcion: ""})
@@ -154,8 +194,12 @@ export default function CreateScreen() {
     setModalVisible(false)
   }
 
-  const cancelarCreacion = () => {
-    router.push("/")
+  const retroceder = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
   }
 
   // elimina los items que creo en base a las ids que recibio al crearlos
@@ -316,13 +360,29 @@ export default function CreateScreen() {
       console.log("Hermanos guardados ✅")
 
       console.log(" ---------- Todos los datos guardados con exito ✅ ---------- ")
-      alert("Historia clinica guardada.")
-      router.push("/")
+      retroceder()
 
     } catch (error) {
       console.error("create : Se produjo un error cuardando los datos obtenidos ❌.")
     }
   }
+
+  const validarCamposObligatorios = (data: HistoriaClinicaComunModel) => {
+    const faltantes: string[] = [];
+
+    camposObligatorios.forEach((campo) => {
+      const valor = data[campo];
+      if (!valor || String(valor).trim() === "") {
+        faltantes.push(nombresLegibles[campo] || campo);
+      }
+    });
+
+    if (listaItems.length === 0) {
+      faltantes.push("Línea de tiempo (al menos un evento)");
+    }
+
+    return faltantes;
+  };
 
 
 
@@ -344,13 +404,13 @@ export default function CreateScreen() {
         <Text style={styles.cardTitle}>Datos del Paciente</Text>
 
         <CustomInput
-            placeholder="Nombre completo"
+            placeholder="Nombre completo *"
             value={formData.nombre}
             onChangeText={(text) => handleChange("nombre", text)}
         />
 
         <CustomInput
-            placeholder="Edad"
+            placeholder="Edad *"
             keyboardType="numeric"
             value={formData.edad}
             onChangeText={(text) => handleChange("edad", text)}
@@ -364,7 +424,7 @@ export default function CreateScreen() {
         />
 
         <CustomInput
-            placeholder="Sexo"
+            placeholder="Sexo *"
             value={formData.sexo}
             onChangeText={(text) => handleChange("sexo", text)}
         />
@@ -376,19 +436,19 @@ export default function CreateScreen() {
         />
 
         <CustomInput
-            placeholder="Lugar de nacimiento"
+            placeholder="Lugar de nacimiento *"
             value={formData.l_nacimiento}
             onChangeText={(text) => handleChange("l_nacimiento", text)}
         />
 
         <CustomInput
-            placeholder="Lugar de residencia"
+            placeholder="Lugar de residencia *"
             value={formData.l_residencia}
             onChangeText={(text) => handleChange("l_residencia", text)}
         />
 
         <CustomInput
-            placeholder="Ocupacion"
+            placeholder="Ocupacion *"
             value={formData.ocupacion}
             onChangeText={(text) => handleChange("ocupacion", text)}
         />
@@ -400,7 +460,7 @@ export default function CreateScreen() {
 
         <CustomInput
             big
-            placeholder="Describa brevemente el motivo de la consulta..."
+            placeholder="Describa brevemente el motivo de la consulta... *"
             value={formData.motivo_consulta}
             onChangeText={(text) => handleChange("motivo_consulta", text)}
         />
@@ -470,7 +530,7 @@ export default function CreateScreen() {
 
         <CustomInput
             big
-            placeholder="Haga una narración acorde a la linea de tiempo establecida previamente..."
+            placeholder="Haga una narración acorde a la linea de tiempo establecida previamente... *"
             value={formData.narracion}
             onChangeText={(text) => handleChange("narracion", text)}
         />
@@ -482,7 +542,7 @@ export default function CreateScreen() {
 
         <CustomInput
             big
-            placeholder="Haga una descripción de los antecedentes de la enfermedad actual del paciente..."
+            placeholder="Haga una descripción de los antecedentes de la enfermedad actual del paciente... *"
             value={formData.antecedentes_enfermedad}
             onChangeText={(text) => handleChange("antecedentes_enfermedad", text)}
         />
@@ -494,7 +554,7 @@ export default function CreateScreen() {
 
         <CustomInput
             big
-            placeholder="Alergias del paciente..."
+            placeholder="Alergias del paciente... *"
             value={formData.alergias}
             onChangeText={(text) => handleChange("alergias", text)}
         />
@@ -507,7 +567,7 @@ export default function CreateScreen() {
         <Text style={styles.inputLabel}>Antecedentes fisiológicos</Text>
         <CustomInput
             big
-            placeholder="Antecedentes fisiológicos..."
+            placeholder="Antecedentes fisiológicos... *"
             value={formData.antecedentes_fisiologicos}
             onChangeText={(text) => handleChange("antecedentes_fisiologicos", text)}
         />
@@ -515,7 +575,7 @@ export default function CreateScreen() {
         <Text style={styles.inputLabel}>Antecedentes patológicos</Text>
         <CustomInput
             big
-            placeholder="Antecedentes patológicos..."
+            placeholder="Antecedentes patológicos... *"
             value={formData.antecedentes_patologicos}
             onChangeText={(text) => handleChange("antecedentes_patologicos", text)}
         />
@@ -523,7 +583,7 @@ export default function CreateScreen() {
         <Text style={styles.inputLabel}>Antecedentes quirúrgicos</Text>
         <CustomInput
             big
-            placeholder="Antecedentes quirúrgicos..."
+            placeholder="Antecedentes quirúrgicos... *"
             value={formData.antecedentes_quirurgicos}
             onChangeText={(text) => handleChange("antecedentes_quirurgicos", text)}
         />
@@ -531,7 +591,7 @@ export default function CreateScreen() {
         <Text style={styles.inputLabel}>Antecedentes farmacológicos</Text>
         <CustomInput
             big
-            placeholder="Antecedentes farmacológicos..."
+            placeholder="Antecedentes farmacológicos... *"
             value={formData.antecedentes_farmacologicos}
             onChangeText={(text) => handleChange("antecedentes_farmacologicos", text)}
         />
@@ -763,7 +823,7 @@ export default function CreateScreen() {
               "¿Seguro que quieres cancelar?",
               [
                 { text: "No", style: "cancel" },
-                { text: "Sí", onPress: () => cancelarCreacion() }
+                { text: "Sí", onPress: () => retroceder() }
               ]
             );
           }}
@@ -774,6 +834,15 @@ export default function CreateScreen() {
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: Colors.primary }]}
           onPress={() => {
+            const faltantes = validarCamposObligatorios(formData);
+            if (faltantes.length > 0) {
+              Alert.alert(
+                "Campos faltantes",
+                faltantes.map(f => `• ${f}`).join("\n")
+              );
+              return;
+            }
+
             Alert.alert(
               "Confirmar",
               "¿Seguro que quieres guardar esta historia?",
