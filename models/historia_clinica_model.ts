@@ -8,7 +8,7 @@ export interface HistoriaClinicaComunModel {
     dni?: string;
     edad: string;
     sexo: string;
-    estado_civil: string;
+    estado_civil?: string;
     l_nacimiento: string;
     l_residencia: string;
     ocupacion: string;
@@ -25,33 +25,33 @@ export interface HistoriaClinicaComunModel {
     antecedentes_quirurgicos: string;
     antecedentes_farmacologicos: string;
     
-    madre_vive: string;
+    madre_vive?: string;
     madre_causa_fallecimiento?: string;
     madre_enfermedad?: string;
     
-    padre_vive: string;
+    padre_vive?: string;
     padre_causa_fallecimiento?: string;
     padre_enfermedad?: string;
     
     hijos: string;
     hermanos: string;
     
-    h_alimentacion: string;
-    h_diuresis: string;
-    h_catarsis: string;
-    h_sueño: string;
-    h_alcohol_tabaco: string;
-    h_infusiones: string;
-    h_farmacos: string;
+    h_alimentacion?: string;
+    h_diuresis?: string;
+    h_catarsis?: string;
+    h_sueño?: string;
+    h_alcohol_tabaco?: string;
+    h_infusiones?: string;
+    h_farmacos?: string;
     
-    obra_social: string;
-    material_casa: string;
-    electricidad: string;
-    agua: string;
-    toilet_privado: string;
-    calefaccion: string;
-    mascotas: string;
-    otro: string;
+    obra_social?: string;
+    material_casa?: string;
+    electricidad?: string;
+    agua?: string;
+    toilet_privado?: string;
+    calefaccion?: string;
+    mascotas?: string;
+    otro?: string;
 }
 
 export interface HistoriaClinicaComunSQLResult {
