@@ -2,12 +2,12 @@ import { BinaryChoice } from "@/components/BinaryChoice";
 import { CustomInput } from "@/components/CustomInput";
 import { DateInput } from "@/components/DateInput";
 import { NumberPicker } from "@/components/NumberPicker";
-import { agregarHistoriaClinica } from "@/db/historia_clinica_service";
-import { agregarLineaTiempoItem } from "@/db/linea_tiempo_item_service";
-import { agregarPariente } from "@/db/pariente_service";
+import { agregarHistoriaClinica, eliminarHistoriaClinica } from "@/db/historia_clinica_service";
+import { agregarLineaTiempoItem, eliminarItemPorId } from "@/db/linea_tiempo_item_service";
+import { agregarPariente, eliminarParientePorId } from "@/db/pariente_service";
 import { HistoriaClinicaComunModel, HistoriaClinicaComunResult } from "@/models/historia_clinica_model";
-import { ItemModel } from "@/models/lt_item_model";
-import { ParienteModel } from "@/models/pariente_model";
+import { ItemModel, ItemResult } from "@/models/lt_item_model";
+import { ParienteModel, ParienteResult } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
@@ -158,6 +158,24 @@ export default function CreateScreen() {
     router.push("/")
   }
 
+  // elimina los items que creo en base a las ids que recibio al crearlos
+  const eliminarItemsGuardados = async (lista_ids : number[]) => {
+    if(lista_ids.length > 0){
+      for (let i=0; i<listaItems.length; i++){
+        eliminarItemPorId(lista_ids[i])
+      }
+    }
+  }
+
+  // elimina los parientes que creo en base a las ids que recibio al crearlos
+  const eliminarParientesGuardados = async (lista_ids : number[]) => {
+    if(lista_ids.length > 0){
+      for (let i=0; i<listaItems.length; i++){
+        eliminarParientePorId(lista_ids[i])
+      }
+    }
+  }
+
   const guardarDatos = async () => {
     console.log(" ---------- FORM DATA ---------- ")
     console.log(formData)
@@ -167,6 +185,16 @@ export default function CreateScreen() {
     console.log(listaHijos)
     console.log(" ---------- HERMANOS ---------- ")
     console.log(listaHermanos)
+
+    const reg_aux_id: {
+      id_historia: number;
+      id_items: number[];
+      id_parientes: number[]
+    } = {
+      id_historia: -1,
+      id_items: [],
+      id_parientes: []
+    }
 
     try{
 
@@ -214,11 +242,12 @@ export default function CreateScreen() {
       }
 
       // envia a guardar la historia clinica
-      const response : HistoriaClinicaComunResult = await agregarHistoriaClinica(historiaNueva)
-      if(!response.success){
-        alert("Error cuardando la historia clinica :(")
-        return
+      const response_historia : HistoriaClinicaComunResult = await agregarHistoriaClinica(historiaNueva)
+      if(!response_historia.success){
+        alert("Error cuardando la historia clinica :( (error : historia)")
+        throw new Error("Error guardando historia");
       }
+      reg_aux_id.id_historia=response_historia.id!
       console.log("Historia Clinica guardada ✅")
 
       // se crea el objeto para envio de datos de items por cada item que se haya creado
@@ -228,9 +257,22 @@ export default function CreateScreen() {
         const itemNuevo : ItemModel = {
           fecha: item.fecha,
           descripcion: item.fecha,
-          historia_clinica_comun_id: response.id!
+          historia_clinica_comun_id: response_historia.id!
         }
-        await agregarLineaTiempoItem(itemNuevo)
+
+        const response_item : ItemResult = await agregarLineaTiempoItem(itemNuevo)
+
+        // si falla
+        if(!response_item.success){
+          alert("Error cuardando la historia clinica :( (error : item)")
+          // procede a borrar los que guardo si es que guardo alguno
+          await eliminarItemsGuardados(reg_aux_id.id_items)
+          await eliminarHistoriaClinica(reg_aux_id.id_historia)
+          throw new Error("Error guardando item");
+        }else{
+          // guarda la id del item actual
+          reg_aux_id.id_items.push(response_item.id!)
+        }
       }
       console.log("Items guardados ✅")
 
@@ -241,9 +283,22 @@ export default function CreateScreen() {
         const hijoNuevo : ParienteModel = {
           nota: hijo.nota,
           tipo: "hijo",
-          historia_clinica_comun_id: response.id!
+          historia_clinica_comun_id: response_historia.id!
         }
-        await agregarPariente(hijoNuevo)
+        const response_pariente : ParienteResult = await agregarPariente(hijoNuevo)
+
+        // si falla
+        if(!response_pariente.success){
+          alert("Error cuardando la historia clinica :( (error : pariente)")
+          // procede a borrar los items y parientes que guardo, si guardo alguno
+          await eliminarParientesGuardados(reg_aux_id.id_parientes)
+          await eliminarItemsGuardados(reg_aux_id.id_items)
+          await eliminarHistoriaClinica(reg_aux_id.id_historia)
+          throw new Error("Error guardando pariente");
+        }else{
+          // guarda la id del pariente actual
+          reg_aux_id.id_parientes.push(response_pariente.id!)
+        }
       }
       console.log("Hijos guardados ✅")
 
@@ -254,7 +309,7 @@ export default function CreateScreen() {
         const hermanoNuevo : ParienteModel = {
           nota: hermano.nota,
           tipo: "hermano",
-          historia_clinica_comun_id: response.id!
+          historia_clinica_comun_id: response_historia.id!
         }
         await agregarPariente(hermanoNuevo)
       }

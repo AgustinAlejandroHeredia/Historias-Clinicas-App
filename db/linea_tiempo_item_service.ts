@@ -83,3 +83,38 @@ export const obtenerItemsPorHistoriaId = async (
         }
     }
 }
+
+export const eliminarItemPorId = async (
+    id:number
+): Promise<ItemResult> => {
+    try {
+
+        const db = await openDatabase()
+
+        const result = await db.runAsync(
+            'DELETE FROM lt_item WHERE id = ?',
+            [id]
+        )
+
+        if(result.changes === 0){
+            return {
+                success: false,
+                error: 'No se encontro el item con la id proporcionada.'
+            }
+        }
+
+        console.log("Exito al eliminar el item con id ", id, " ✅")
+        return {
+            success: true,
+            changes: result.changes,
+            message: 'Item eliminado exitosamente ✅'
+        }
+
+    } catch (error) {
+        console.error("Error al eliminar el item con id ", id, " ❌")
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        }
+    }
+}

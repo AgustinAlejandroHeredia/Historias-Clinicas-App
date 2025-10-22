@@ -10,6 +10,8 @@ export interface ItemModel {
 export interface ItemResult extends DatabaseResult {
     data?: ItemModel | ItemModel[]
     id?: number
+    changes?: number;
+    message?: string;
 }
 
 export interface ItemListaModel {

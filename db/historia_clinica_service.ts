@@ -300,7 +300,7 @@ export const eliminarHistoriaClinica = async (id:number): Promise<HistoriaClinic
             }
         }
 
-        console.log('Exito al eliminar la historia clinica con ID ', id, '.')
+        console.log('Exito al eliminar la historia clinica con ID ', id, ' ✅')
         return {
             success: true,
             changes: result.changes,
@@ -308,7 +308,7 @@ export const eliminarHistoriaClinica = async (id:number): Promise<HistoriaClinic
         }
 
     } catch (error) {
-        console.error("Error al eliminar la historia clinica con id ", id, ".")
+        console.error("Error al eliminar la historia clinica con id ", id, " ❌")
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error desconocido'

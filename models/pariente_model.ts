@@ -10,6 +10,8 @@ export interface ParienteModel {
 export interface ParienteResult extends DatabaseResult {
     id?: number,
     data?: ParienteModel,
+    changes?: number;
+    message?: string;
 }
 
 export interface ParienteListaModel {
