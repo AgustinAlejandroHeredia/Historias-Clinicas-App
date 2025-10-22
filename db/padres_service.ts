@@ -8,9 +8,10 @@ export const initDatabasePadres = async() => {
         (await db).execAsync(`
             CREATE TABLE IF NOT EXISTS padres (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                vive INTEGER NOT NULL,
-                fallecimiento TEXT,
-                enfermedad TEXT,
+                vive TEXT NOT NULL,
+                fallecimiento TEXT NOT NULL,
+                enfermedad TEXT NOT NULL,
+                tipo TEXT NOT NULL,
                 historia_clinica_comun_id INTEGER NOT NULL,
                 FOREIGN KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
             )

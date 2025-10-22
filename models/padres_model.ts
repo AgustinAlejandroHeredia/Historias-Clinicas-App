@@ -5,6 +5,7 @@ export interface PadreModel {
     vive: number,
     fallecimiento?: string,
     enfermedad?: string,
+    tipo: string,
     historia_clinica_comun_id: number
 }
 

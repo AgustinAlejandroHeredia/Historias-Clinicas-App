@@ -5,8 +5,8 @@ export interface HistoriaClinicaComunModel {
     fecha_creacion?: string;
     
     nombre: string;
-    dni?: number;
-    edad: number;
+    dni?: string;
+    edad: string;
     sexo: string;
     estado_civil: string;
     l_nacimiento: string;
@@ -17,21 +17,24 @@ export interface HistoriaClinicaComunModel {
     narracion: string;
     
     antecedentes_enfermedad: string;
+
+    alergias: string,
+
     antecedentes_fisiologicos: string;
     antecedentes_patologicos: string;
     antecedentes_quirurgicos: string;
     antecedentes_farmacologicos: string;
     
-    madre_vive: boolean;
+    madre_vive: string;
     madre_causa_fallecimiento?: string;
     madre_enfermedad?: string;
     
-    padre_vive: boolean;
+    padre_vive: string;
     padre_causa_fallecimiento?: string;
     padre_enfermedad?: string;
     
-    hijos: number;
-    hermanos: number;
+    hijos: string;
+    hermanos: string;
     
     h_alimentacion: string;
     h_diuresis: string;
@@ -43,9 +46,9 @@ export interface HistoriaClinicaComunModel {
     
     obra_social: string;
     material_casa: string;
-    electricidad: boolean;
-    agua: boolean;
-    toilet_privado: boolean;
+    electricidad: string;
+    agua: string;
+    toilet_privado: string;
     calefaccion: string;
     mascotas: string;
     otro: string;
@@ -55,8 +58,8 @@ export interface HistoriaClinicaComunSQLResult {
     id: number;
     fecha_creacion: string;
     nombre: string;
-    dni: number | null;
-    edad: number;
+    dni: string | "";
+    edad: string;
     sexo: string;
     estado_civil: string;
     l_nacimiento: string;
@@ -65,18 +68,19 @@ export interface HistoriaClinicaComunSQLResult {
     motivo_consulta: string;
     narracion: string;
     antecedentes_enfermedad: string;
+    alergias: string,
     antecedentes_fisiologicos: string;
     antecedentes_patologicos: string;
     antecedentes_quirurgicos: string;
     antecedentes_farmacologicos: string;
-    madre_vive: number;
-    madre_causa_fallecimiento: string | null;
-    madre_enfermedad: string | null;
-    padre_vive: number;
-    padre_causa_fallecimiento: string | null;
-    padre_enfermedad: string | null;
-    hijos: number;
-    hermanos: number;
+    madre_vive: string;
+    madre_causa_fallecimiento: string | "";
+    madre_enfermedad: string | "";
+    padre_vive: string;
+    padre_causa_fallecimiento: string | "";
+    padre_enfermedad: string | "";
+    hijos: string;
+    hermanos: string;
     h_alimentacion: string;
     h_diuresis: string;
     h_catarsis: string;
@@ -86,9 +90,9 @@ export interface HistoriaClinicaComunSQLResult {
     h_farmacos: string;
     obra_social: string;
     material_casa: string;
-    electricidad: number;
-    agua: number;
-    toilet_privado: number;
+    electricidad: string;
+    agua: string;
+    toilet_privado: string;
     calefaccion: string;
     mascotas: string;
     otro: string;
@@ -111,4 +115,48 @@ export interface HistoriaClinicaListadoModel {
 export interface HistoriaClinicaComunListadoResult extends DatabaseResult {
     data?: HistoriaClinicaListadoModel[];
     count?: number;
+}
+
+export interface HistoriaClinicaComun_View_Exchange {
+    id?: number;
+    fecha_creacion?: string;
+    nombre: string;
+    dni: string;
+    edad: string;
+    sexo: string;
+    estado_civil: string;
+    l_nacimiento: string;
+    l_residencia: string;
+    ocupacion: string;
+    motivo_consulta: string;
+    narracion: string;
+    antecedentes_enfermedad: string;
+    alergias: string,
+    antecedentes_fisiologicos: string;
+    antecedentes_patologicos: string;
+    antecedentes_quirurgicos: string;
+    antecedentes_farmacologicos: string;
+    madre_vive: string;
+    madre_causa_fallecimiento: string;
+    madre_enfermedad: string;
+    padre_vive: string;
+    padre_causa_fallecimiento: string;
+    padre_enfermedad: string;
+    hijos: string;
+    hermanos: string;
+    h_alimentacion: string;
+    h_diuresis: string;
+    h_catarsis: string;
+    h_sueño: string;
+    h_alcohol_tabaco: string;
+    h_infusiones: string;
+    h_farmacos: string;
+    obra_social: string;
+    material_casa: string;
+    electricidad: string;
+    agua: string;
+    toilet_privado: string;
+    calefaccion: string;
+    mascotas: string;
+    otro: string;
 }

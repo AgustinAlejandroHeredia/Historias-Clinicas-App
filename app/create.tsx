@@ -1,8 +1,17 @@
-import { siguienteId } from "@/db/historia_clinica_service";
+import { BinaryChoice } from "@/components/BinaryChoice";
+import { CustomInput } from "@/components/CustomInput";
+import { DateInput } from "@/components/DateInput";
+import { NumberPicker } from "@/components/NumberPicker";
+import { agregarHistoriaClinica, ultimoIdHistoriaClinica } from "@/db/historia_clinica_service";
+import { agregarLineaTiempoItem } from "@/db/linea_tiempo_item_service";
+import { agregarPariente } from "@/db/pariente_service";
+import { HistoriaClinicaComunModel, HistoriaClinicaComunResult } from "@/models/historia_clinica_model";
 import { ItemModel } from "@/models/lt_item_model";
-import { useRouter } from "expo-router";
+import { ParienteModel } from "@/models/pariente_model";
+import { Colors } from "@/theme/colors";
+import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function CreateScreen() {
   
@@ -24,6 +33,9 @@ export default function CreateScreen() {
     narracion: "",
 
     antecedentes_enfermedad: "",
+
+    alergias: "",
+
     antecedentes_fisiologicos: "",
     antecedentes_patologicos: "",
     antecedentes_quirurgicos: "",
@@ -37,8 +49,8 @@ export default function CreateScreen() {
     padre_causa_fallecimiento: "",
     padre_enfermedad: "",
 
-    hijos: "",
-    hermanos: "",
+    hijos: "0",
+    hermanos: "0",
 
     h_alimentacion: "",
     h_diuresis: "",
@@ -56,12 +68,6 @@ export default function CreateScreen() {
     calefaccion: "",
     mascotas: "",
     otro: "",
-
-
-
-
-
-    diagnostico: "",
   });
 
   const [listaItems, setListaItems] = useState<ItemModel[]>([])
@@ -69,6 +75,12 @@ export default function CreateScreen() {
   const [nuevoItem, setNuevoItem] = useState({fecha: "", descripcion: ""})
   const [ultimoId, setUltimoId] = useState<number>(0) // si se lee 0 es que hubo un error
   const [itemIdAux, setItemIdAux] = useState<number>(0)
+
+  const [listaHijos, setListaHijos] = useState<ParienteModel[]>([])
+  const [cantHijos, setCantHijos] = useState<number>(0)
+
+  const [listaHermanos, setListaHermanos] = useState<ParienteModel[]>([])
+  const [cantHermanos, setCantHermanos] = useState<number>(0)
 
 
 
@@ -80,15 +92,14 @@ export default function CreateScreen() {
       await obtenerUltimoId();
     } catch (error) {
       console.error("create: ❌ Error al obtener el último ID", error);
-      // Opcional: mostrar un mensaje al usuario
     }
   };
   initialize();
 }, []);
 
-  const obtenerUltimoId = async () => {
+  const obtenerUltimoId_old = async () => {
     try {
-      const res = await siguienteId();
+      const res = await ultimoIdHistoriaClinica();
       if (res >= 0) {
         setUltimoId(res);
         console.log("create: ultimo ID es", res);
@@ -103,8 +114,72 @@ export default function CreateScreen() {
     }
   };
 
+  // borrar, no se necesita
+  const obtenerUltimoId = async () => {
+    try {
+
+      const res = await ultimoIdHistoriaClinica();
+
+      switch (res) {
+        case -2:
+          console.error("create : ❌ Error en obtenerUltimoId:")
+          alert("Hubo un error leyendo los datos almacenados.")
+          router.push("/")
+          break
+        case -1:
+          setUltimoId(0)
+          break
+        default:
+          setUltimoId(res+1)
+          break
+      }
+
+    } catch (error) {
+      console.error("create: ❌ Error en obtenerUltimoId:", error);
+      throw error; // Propaga el error para manejarlo en el useEffect
+    }
+  }
+
   const handleChange = (campo: keyof typeof formData, valor: string) => {
     setFormData({ ...formData, [campo]: valor });
+  };
+
+  const handleCantidadHijos = (cant: number) => {
+    setCantHijos(cant);
+    const nuevaLista = Array.from({ length: cant }, (_, i) => ({
+      id: i + 1,
+      nota: listaHijos[i]?.nota || "",
+      tipo: "hijo",
+      historia_clinica_comun_id: -1,
+    }));
+    setListaHijos(nuevaLista);
+  }
+
+  const handleCantidadHermanos = (cant: number) => {
+    setCantHermanos(cant);
+    const nuevaLista = Array.from({ length: cant }, (_, i) => ({
+      id: i + 1,
+      nota: listaHermanos[i]?.nota || "",
+      tipo: "hermano",
+      historia_clinica_comun_id: 0,
+    }));
+    setListaHermanos(nuevaLista);
+  };
+
+  const handleParienteNota = (
+    tipo: "hijo" | "hermano",
+    index: number,
+    texto: string
+  ) => {
+    if (tipo === "hijo") {
+      const actualizados = [...listaHijos];
+      actualizados[index].nota = texto;
+      setListaHijos(actualizados);
+    } else {
+      const actualizados = [...listaHermanos];
+      actualizados[index].nota = texto;
+      setListaHermanos(actualizados);
+    }
   };
 
   const agregarItem = () => {
@@ -141,69 +216,185 @@ export default function CreateScreen() {
     </View>
   )
 
+  const cancelarCreacion = () => {
+    router.push("/")
+  }
+
+  const guardarDatos = async () => {
+    console.log(" ---------- FORM DATA ---------- ")
+    console.log(formData)
+    console.log(" ---------- ITEMS ---------- ")
+    console.log(listaItems)
+    console.log(" ---------- HIJOS ---------- ")
+    console.log(listaHijos)
+    console.log(" ---------- HERMANOS ---------- ")
+    console.log(listaHermanos)
+
+    try{
+
+      // se crea el objeto para envio de datos de historia clinica
+      const historiaNueva : HistoriaClinicaComunModel = {
+        nombre: formData.nombre,
+        dni: formData.dni,
+        edad: formData.edad,
+        sexo: formData.sexo,
+        estado_civil: formData.estado_civil,
+        l_nacimiento: formData.l_nacimiento,
+        l_residencia: formData.l_residencia,
+        ocupacion: formData.ocupacion,
+        motivo_consulta: formData.motivo_consulta,
+        narracion: formData.narracion,
+        antecedentes_enfermedad: formData.antecedentes_enfermedad,
+        alergias: formData.alergias,
+        antecedentes_fisiologicos: formData.antecedentes_fisiologicos,
+        antecedentes_patologicos: formData.antecedentes_patologicos,
+        antecedentes_quirurgicos: formData.antecedentes_quirurgicos,
+        antecedentes_farmacologicos: formData.antecedentes_farmacologicos,
+        madre_vive: formData.madre_vive,
+        madre_causa_fallecimiento: formData.madre_causa_fallecimiento,
+        madre_enfermedad: formData.madre_enfermedad,
+        padre_vive: formData.padre_vive,
+        padre_causa_fallecimiento: formData.padre_causa_fallecimiento,
+        padre_enfermedad: formData.padre_enfermedad,
+        hijos: formData.hijos,
+        hermanos: formData.hermanos,
+        h_alimentacion: formData.h_alimentacion,
+        h_diuresis: formData.h_diuresis,
+        h_catarsis: formData.h_catarsis,
+        h_sueño: formData.h_sueño,
+        h_alcohol_tabaco: formData.h_alcohol_tabaco,
+        h_infusiones: formData.h_infusiones,
+        h_farmacos: formData.h_farmacos,
+        obra_social: formData.obra_social,
+        material_casa: formData.material_casa,
+        electricidad: formData.electricidad,
+        agua: formData.agua,
+        toilet_privado: formData.toilet_privado,
+        calefaccion: formData.calefaccion,
+        mascotas: formData.mascotas,
+        otro: formData.otro
+      }
+
+      // envia a guardar la historia clinica
+      const response : HistoriaClinicaComunResult = await agregarHistoriaClinica(historiaNueva)
+      if(!response.success){
+        alert("Error cuardando la historia clinica :(")
+        return
+      }
+      console.log("Historia Clinica guardada ✅")
+
+      // se crea el objeto para envio de datos de items por cada item que se haya creado
+      for (let i=0; i<listaItems.length; i++){
+        const item = listaItems[i]
+
+        const itemNuevo : ItemModel = {
+          fecha: item.fecha,
+          descripcion: item.fecha,
+          historia_clinica_comun_id: response.id!
+        }
+        await agregarLineaTiempoItem(itemNuevo)
+      }
+      console.log("Items guardados ✅")
+
+      // se crea el objeto para envio de datos de pariente por cada item que se haya creado
+      for (let i=0; i<listaHijos.length; i++){
+        const hijo = listaHijos[i]
+
+        const hijoNuevo : ParienteModel = {
+          nota: hijo.nota,
+          tipo: "hijo",
+          historia_clinica_comun_id: response.id!
+        }
+        await agregarPariente(hijoNuevo)
+      }
+      console.log("Hijos guardados ✅")
+
+      // se crra el objeto para envio de datos de pariente por cada item que se haya creado
+      for (let i=0; i<listaHermanos.length; i++){
+        const hermano = listaHermanos[i]
+
+        const hermanoNuevo : ParienteModel = {
+          nota: hermano.nota,
+          tipo: "hermano",
+          historia_clinica_comun_id: response.id!
+        }
+        await agregarPariente(hermanoNuevo)
+      }
+      console.log("Hermanos guardados ✅")
+
+      console.log(" ---------- Todos los datos guardados con exito ✅ ---------- ")
+      alert("Historia clinica guardada.")
+      router.push("/")
+
+    } catch (error) {
+      console.error("create : Se produjo un error cuardando los datos obtenidos ❌.")
+    }
+  }
+
 
 
   // VISTA
 
   return (
+    <>
+    <Stack.Screen
+        options={{
+          title: "Crear Historia Clínica",
+          headerBackVisible: false, // elimino la flecha de retroceso para evitar errores del user y mantener consistencia visual
+          headerShown: true,
+        }}
+      />
+
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* Datos personales */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Datos del Paciente</Text>
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Nombre completo"
             value={formData.nombre}
             onChangeText={(text) => handleChange("nombre", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Edad"
             keyboardType="numeric"
             value={formData.edad}
             onChangeText={(text) => handleChange("edad", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="DNI"
             keyboardType="numeric"
             value={formData.dni}
             onChangeText={(text) => handleChange("dni", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Sexo"
             value={formData.sexo}
             onChangeText={(text) => handleChange("sexo", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Estado civil"
             value={formData.estado_civil}
             onChangeText={(text) => handleChange("estado_civil", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Lugar de nacimiento"
             value={formData.l_nacimiento}
             onChangeText={(text) => handleChange("l_nacimiento", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Lugar de residencia"
             value={formData.l_residencia}
             onChangeText={(text) => handleChange("l_residencia", text)}
         />
 
-        <TextInput
-            style={styles.input}
+        <CustomInput
             placeholder="Ocupacion"
             value={formData.ocupacion}
             onChangeText={(text) => handleChange("ocupacion", text)}
@@ -214,11 +405,9 @@ export default function CreateScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Motivo de Consulta</Text>
 
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Describa brevemente el motivo de la consulta..."
-            multiline
-            numberOfLines={4}
             value={formData.motivo_consulta}
             onChangeText={(text) => handleChange("motivo_consulta", text)}
         />
@@ -256,14 +445,14 @@ export default function CreateScreen() {
         <View style={styles.modalBackground}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Nuevo evento</Text>
-            <TextInput
-              style={styles.input}
+            <Text style={styles.inputLabel}>Solo ingresar números</Text>
+            <DateInput
               placeholder="Fecha (dd/mm/yyyy)"
               value={nuevoItem.fecha}
               onChangeText={(text) => setNuevoItem({ ...nuevoItem, fecha: text })}
             />
-            <TextInput
-              style={[styles.input, styles.textArea]}
+            <CustomInput
+              big
               placeholder="Descripción"
               multiline
               numberOfLines={3}
@@ -274,7 +463,7 @@ export default function CreateScreen() {
               <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#ccc" }]} onPress={cancelarNuevoItem}>
                 <Text>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#4CAF50" }]} onPress={aceptarNuevoItem}>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: Colors.primary, }]} onPress={aceptarNuevoItem}>
                 <Text style={{ color: "white" }}>Aceptar</Text>
               </TouchableOpacity>
             </View>
@@ -286,11 +475,9 @@ export default function CreateScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Narración</Text>
 
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Haga una narración acorde a la linea de tiempo establecida previamente..."
-            multiline
-            numberOfLines={4}
             value={formData.narracion}
             onChangeText={(text) => handleChange("narracion", text)}
         />
@@ -300,13 +487,23 @@ export default function CreateScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Antecedentes de enfermedad</Text>
 
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Haga una descripción de los antecedentes de la enfermedad actual del paciente..."
-            multiline
-            numberOfLines={4}
             value={formData.antecedentes_enfermedad}
             onChangeText={(text) => handleChange("antecedentes_enfermedad", text)}
+        />
+      </View>
+
+      {/* Alergias */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Alergias</Text>
+
+        <CustomInput
+            big
+            placeholder="Alergias del paciente..."
+            value={formData.alergias}
+            onChangeText={(text) => handleChange("alergias", text)}
         />
       </View>
 
@@ -315,51 +512,127 @@ export default function CreateScreen() {
         <Text style={styles.cardTitle}>Antecedentes personales</Text>
 
         <Text style={styles.inputLabel}>Antecedentes fisiológicos</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Antecedentes fisiológicos..."
-            multiline
-            numberOfLines={4}
             value={formData.antecedentes_fisiologicos}
             onChangeText={(text) => handleChange("antecedentes_fisiologicos", text)}
         />
 
         <Text style={styles.inputLabel}>Antecedentes patológicos</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Antecedentes patológicos..."
-            multiline
-            numberOfLines={4}
             value={formData.antecedentes_patologicos}
             onChangeText={(text) => handleChange("antecedentes_patologicos", text)}
         />
 
         <Text style={styles.inputLabel}>Antecedentes quirúrgicos</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Antecedentes quirúrgicos..."
-            multiline
-            numberOfLines={4}
             value={formData.antecedentes_quirurgicos}
             onChangeText={(text) => handleChange("antecedentes_quirurgicos", text)}
         />
 
         <Text style={styles.inputLabel}>Antecedentes farmacológicos</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Antecedentes farmacológicos..."
-            multiline
-            numberOfLines={4}
             value={formData.antecedentes_farmacologicos}
             onChangeText={(text) => handleChange("antecedentes_farmacologicos", text)}
         />
       </View>
 
       {/* Antecedentes familiares */}
+
+      {/* Padres */}
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Antecedentes familiares</Text>
 
-        
+        <Text style={styles.inputLabelBigger}>Madre</Text>
+        <Text style={styles.inputLabel}>¿Vive?</Text>
+        <BinaryChoice
+          value={formData.madre_vive as "si" | "no" | ""}
+          onChange={(val) => handleChange("madre_vive", val)}
+        />
+        {formData.madre_vive === "no" && (
+          <CustomInput
+            small
+            placeholder="Causa de fallecimiento..."
+            value={formData.madre_causa_fallecimiento}
+            onChangeText={(text) => handleChange("madre_causa_fallecimiento", text)}
+          />
+        )}
+        <Text style={styles.inputLabel}>Padece alguna enfermedad?</Text>
+        <CustomInput
+          mid
+          placeholder="Enfermedad/es de la madre..."
+          value={formData.madre_enfermedad}
+          onChangeText={(text) => handleChange("madre_enfermedad", text)}
+        />
+
+        <Text style={styles.inputLabelBigger}>Padre</Text>
+        <Text style={styles.inputLabel}>¿Vive?</Text>
+        <BinaryChoice
+          value={formData.padre_vive as "si" | "no" | ""}
+          onChange={(val) => handleChange("padre_vive", val)}
+        />
+        {formData.padre_vive === "no" && (
+          <CustomInput
+            small
+            placeholder="Causa de fallecimiento..."
+            value={formData.padre_causa_fallecimiento}
+            onChangeText={(text) => handleChange("padre_causa_fallecimiento", text)}
+          />
+        )}
+        <Text style={styles.inputLabel}>Padece alguna enfermedad?</Text>
+        <CustomInput
+          mid
+          placeholder="Enfermedad/es del padre..."
+          value={formData.padre_enfermedad}
+          onChangeText={(text) => handleChange("padre_enfermedad", text)}
+        />
+
+        {/* Hijos / Hermanos */}
+
+        <Text style={styles.inputLabelBigger}>Hijos</Text>
+        <Text style={styles.inputLabel}>¿Cuántos?</Text>
+
+        <NumberPicker
+          value={cantHijos}
+          onChange={(num) => handleCantidadHijos(num)}
+        />
+
+        {listaHijos.map((hijo, i) => (
+          <CustomInput
+            small
+            key={`hijo_${i}`}
+            placeholder={`Información del hijo ${i + 1}`}
+            value={hijo.nota}
+            onChangeText={(text) => handleParienteNota("hijo", i, text)}
+          />
+        ))}
+
+        {/* Sección de Hermanos */}
+        <Text style={styles.inputLabelBigger}>Hermanos</Text>
+        <Text style={styles.inputLabel}>¿Cuántos?</Text>
+
+        <NumberPicker
+          value={cantHermanos}
+          onChange={(num) => handleCantidadHermanos(num)}
+        />
+
+        {listaHermanos.map((hermano, i) => (
+          <CustomInput
+            small
+            key={`hermano_${i}`}
+            placeholder={`Información del hermano ${i + 1}`}
+            value={hermano.nota}
+            onChangeText={(text) => handleParienteNota("hermano", i, text)}
+          />
+        ))}
 
       </View>
 
@@ -368,71 +641,57 @@ export default function CreateScreen() {
         <Text style={styles.cardTitle}>Hábitos</Text>
 
         <Text style={styles.inputLabel}>Alimentacion</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de alimentación..."
-            multiline
-            numberOfLines={4}
             value={formData.h_alimentacion}
             onChangeText={(text) => handleChange("h_alimentacion", text)}
         />
 
         <Text style={styles.inputLabel}>Diuresis</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de diuresis..."
-            multiline
-            numberOfLines={4}
             value={formData.h_diuresis}
             onChangeText={(text) => handleChange("h_diuresis", text)}
         />
 
         <Text style={styles.inputLabel}>Catarsis</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de catarsis..."
-            multiline
-            numberOfLines={4}
             value={formData.h_catarsis}
             onChangeText={(text) => handleChange("h_catarsis", text)}
         />
 
         <Text style={styles.inputLabel}>Sueño</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de sueño..."
-            multiline
-            numberOfLines={4}
             value={formData.h_sueño}
             onChangeText={(text) => handleChange("h_sueño", text)}
         />
 
         <Text style={styles.inputLabel}>Alcohol/tabaco</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de alcohol/tabaco..."
-            multiline
-            numberOfLines={4}
             value={formData.h_alcohol_tabaco}
             onChangeText={(text) => handleChange("h_alcohol_tabaco", text)}
         />
 
         <Text style={styles.inputLabel}>Infusiones</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de infusiones..."
-            multiline
-            numberOfLines={4}
             value={formData.h_infusiones}
             onChangeText={(text) => handleChange("h_infusiones", text)}
         />
 
         <Text style={styles.inputLabel}>Fármacos</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="H. de fármacos..."
-            multiline
-            numberOfLines={4}
             value={formData.h_farmacos}
             onChangeText={(text) => handleChange("h_farmacos", text)}
         />
@@ -443,56 +702,101 @@ export default function CreateScreen() {
         <Text style={styles.cardTitle}>Características socioeconómicas</Text>
 
         <Text style={styles.inputLabel}>Obra social</Text>
+        <CustomInput
+            placeholder="Obra social..."
+            value={formData.obra_social}
+            onChangeText={(text) => handleChange("obra_social", text)}
+        />
 
         <Text style={styles.inputLabel}>Material de la casa</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Material del que este hecha la vivienda..."
-            multiline
-            numberOfLines={4}
             value={formData.material_casa}
             onChangeText={(text) => handleChange("material_casa", text)}
         />
 
         <Text style={styles.inputLabel}>Electricidad</Text>
+        <BinaryChoice
+          value={formData.electricidad as "si" | "no" | ""}
+          onChange={(val) => handleChange("electricidad", val)}
+        />
 
         <Text style={styles.inputLabel}>Agua corriente</Text>
+        <BinaryChoice
+          value={formData.agua as "si" | "no" | ""}
+          onChange={(val) => handleChange("agua", val)}
+        />
 
         <Text style={styles.inputLabel}>Baño privado</Text>
+        <BinaryChoice
+          value={formData.toilet_privado as "si" | "no" | ""}
+          onChange={(val) => handleChange("toilet_privado", val)}
+        />
 
         <Text style={styles.inputLabel}>Calefacción</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Calefacción..."
-            multiline
-            numberOfLines={4}
             value={formData.calefaccion}
             onChangeText={(text) => handleChange("calefaccion", text)}
         />
 
         <Text style={styles.inputLabel}>Mascotas</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Mascotas que tenga el paciente..."
-            multiline
-            numberOfLines={4}
             value={formData.mascotas}
             onChangeText={(text) => handleChange("mascotas", text)}
         />
 
         <Text style={styles.inputLabel}>Otros</Text>
-        <TextInput
-            style={[styles.input, styles.textArea]}
+        <CustomInput
+            big
             placeholder="Otras caracteristicas extras a agregar..."
-            multiline
-            numberOfLines={4}
             value={formData.otro}
             onChangeText={(text) => handleChange("otro", text)}
         />
 
       </View>
+
+      {/* Botones al final */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: "#ccc" }]}
+          onPress={() => {
+            Alert.alert(
+              "Confirmar",
+              "¿Seguro que quieres cancelar?",
+              [
+                { text: "No", style: "cancel" },
+                { text: "Sí", onPress: () => cancelarCreacion() }
+              ]
+            );
+          }}
+        >
+          <Text style={styles.actionButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: Colors.primary }]}
+          onPress={() => {
+            Alert.alert(
+              "Confirmar",
+              "¿Seguro que quieres guardar esta historia?",
+              [
+                { text: "No", style: "cancel" },
+                { text: "Sí", onPress: () => guardarDatos() }
+              ]
+            );
+          }}
+        >
+          <Text style={[styles.actionButtonText, { color: "white" }]}>Aceptar</Text>
+        </TouchableOpacity>
+      </View>
       
     </ScrollView>
+    </>
   );
 }
 
@@ -553,7 +857,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#4CAF50",
+    backgroundColor: Colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -595,5 +899,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginBottom: 4,
+  },
+  inputLabelBigger: {
+    fontSize: 17,
+    color: "#333333ff",
+    marginBottom: 4,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    marginBottom: 40,
+  },
+
+  actionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginHorizontal: 5, // separa los botones
+  },
+
+  actionButtonText: {
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

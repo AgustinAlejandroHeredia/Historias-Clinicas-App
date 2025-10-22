@@ -1,4 +1,4 @@
-import { HistoriaClinicaComunListadoResult, HistoriaClinicaComunModel, HistoriaClinicaComunResult, HistoriaClinicaComunSQLResult, HistoriaClinicaListadoModel } from '@/models/historia_clinica_model';
+import { HistoriaClinicaComunListadoResult, HistoriaClinicaComunModel, HistoriaClinicaComunResult, HistoriaClinicaListadoModel } from '@/models/historia_clinica_model';
 import { openDatabase } from './database';
 
 export const initDatabaseHistoriaClinica = async () => {
@@ -7,13 +7,14 @@ export const initDatabaseHistoriaClinica = async () => {
         const db = await openDatabase();
         (await db).execAsync(`
             CREATE TABLE IF NOT EXISTS historia_clinica_comun (
+
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 
                 fecha_creacion TEXT DEFAULT (datetime('now')),
 
                 nombre TEXT NOT NULL,
-                dni INTEGER,
-                edad INTEGER NOT NULL,
+                dni TEXT NOT NULL,
+                edad TEXT NOT NULL,
                 sexo TEXT NOT NULL,
                 estado_civil TEXT NOT NULL,
                 l_nacimiento TEXT NOT NULL,
@@ -24,21 +25,24 @@ export const initDatabaseHistoriaClinica = async () => {
                 narracion TEXT NOT NULL,
 
                 antecedentes_enfermedad TEXT NOT NULL,
+
+                alergias TEXT NOT NULL,
+
                 antecedentes_fisiologicos TEXT NOT NULL,
                 antecedentes_patologicos TEXT NOT NULL,
                 antecedentes_quirurgicos TEXT NOT NULL,
                 antecedentes_farmacologicos TEXT NOT NULL,
 
-                madre_vive INTEGER DEFAULT 1,
+                madre_vive TEXT NOT NULL,
                 madre_causa_fallecimiento TEXT,
                 madre_enfermedad TEXT,
 
-                padre_vive INTEGER DEFAULT 1,
+                padre_vive TEXT NOT NULL,
                 padre_causa_fallecimiento TEXT,
                 padre_enfermedad TEXT,
 
-                hijos INTEGER DEFAULT 0,
-                hermanos INTEGER DEFAULT 0,
+                hijos TEXT DEFAULT '0',
+                hermanos TEXT DEFAULT '0',
 
                 h_alimentacion TEXT NOT NULL,
                 h_diuresis TEXT NOT NULL,
@@ -50,9 +54,9 @@ export const initDatabaseHistoriaClinica = async () => {
 
                 obra_social TEXT NOT NULL,
                 material_casa TEXT NOT NULL,
-                electricidad INTEGER DEFAULT 1,
-                agua INTEGER DEFAULT 1,
-                toilet_privado INTEGER DEFAULT 1,
+                electricidad TEXT NOT NULL,
+                agua TEXT NOT NULL,
+                toilet_privado TEXT NOT NULL,
                 calefaccion TEXT NOT NULL,
                 mascotas TEXT NOT NULL,
                 otro TEXT NOT NULL
@@ -85,7 +89,8 @@ export const agregarHistoriaClinica = async (
                 ocupacion, 
                 motivo_consulta, 
                 narracion, 
-                antecedentes_enfermedad, 
+                antecedentes_enfermedad,
+                alergias,
                 antecedentes_fisiologicos, 
                 antecedentes_patologicos, 
                 antecedentes_quirurgicos, 
@@ -96,7 +101,8 @@ export const agregarHistoriaClinica = async (
                 padre_vive, 
                 padre_causa_fallecimiento, 
                 padre_enfermedad, 
-                hijos, hermanos,
+                hijos, 
+                hermanos,
                 h_alimentacion, 
                 h_diuresis, 
                 h_catarsis, 
@@ -112,11 +118,11 @@ export const agregarHistoriaClinica = async (
                 calefaccion, 
                 mascotas, 
                 otro
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
             [
                 historiaData.nombre,
-                historiaData.dni || null,
+                historiaData.dni || "",
                 historiaData.edad,
                 historiaData.sexo,
                 historiaData.estado_civil,
@@ -126,14 +132,15 @@ export const agregarHistoriaClinica = async (
                 historiaData.motivo_consulta,
                 historiaData.narracion,
                 historiaData.antecedentes_enfermedad,
+                historiaData.alergias,
                 historiaData.antecedentes_fisiologicos,
                 historiaData.antecedentes_patologicos,
                 historiaData.antecedentes_quirurgicos,
                 historiaData.antecedentes_farmacologicos,
-                historiaData.madre_vive ? 1 : 0,
+                historiaData.madre_vive,
                 historiaData.madre_causa_fallecimiento || null,
                 historiaData.madre_enfermedad || null,
-                historiaData.padre_vive ? 1 : 0,
+                historiaData.padre_vive,
                 historiaData.padre_causa_fallecimiento || null,
                 historiaData.padre_enfermedad || null,
                 historiaData.hijos,
@@ -147,9 +154,9 @@ export const agregarHistoriaClinica = async (
                 historiaData.h_farmacos,
                 historiaData.obra_social,
                 historiaData.material_casa,
-                historiaData.electricidad ? 1 : 0,
-                historiaData.agua ? 1 : 0,
-                historiaData.toilet_privado ? 1 : 0,
+                historiaData.electricidad,
+                historiaData.agua,
+                historiaData.toilet_privado,
                 historiaData.calefaccion,
                 historiaData.mascotas,
                 historiaData.otro
@@ -205,7 +212,7 @@ export const obtenerHistoriaClinicaCompletaPorId = async (id:number): Promise<Hi
         const historia = await db.getFirstAsync(
             'SELECT * FROM historia_clinica_comun WHERE id = ?',
             [id]
-        ) as HistoriaClinicaComunSQLResult | null;
+        ) as HistoriaClinicaComunModel | null;
 
         if(!historia){
             return {
@@ -214,11 +221,12 @@ export const obtenerHistoriaClinicaCompletaPorId = async (id:number): Promise<Hi
             };
         }
 
+        /*
         const historiaFormateada: HistoriaClinicaComunModel = {
             id: historia.id,
             fecha_creacion: historia.fecha_creacion,
             nombre: historia.nombre,
-            dni: historia.dni || undefined,
+            dni: historia.dni,
             edad: historia.edad,
             sexo: historia.sexo,
             estado_civil: historia.estado_civil,
@@ -228,14 +236,15 @@ export const obtenerHistoriaClinicaCompletaPorId = async (id:number): Promise<Hi
             motivo_consulta: historia.motivo_consulta,
             narracion: historia.narracion,
             antecedentes_enfermedad: historia.antecedentes_enfermedad,
+            alergias: historia.alergias,
             antecedentes_fisiologicos: historia.antecedentes_fisiologicos,
             antecedentes_patologicos: historia.antecedentes_patologicos,
             antecedentes_quirurgicos: historia.antecedentes_quirurgicos,
             antecedentes_farmacologicos: historia.antecedentes_farmacologicos,
-            madre_vive: historia.madre_vive === 1,
+            madre_vive: historia.madre_vive,
             madre_causa_fallecimiento: historia.madre_causa_fallecimiento || undefined,
             madre_enfermedad: historia.madre_enfermedad || undefined,
-            padre_vive: historia.padre_vive === 1,
+            padre_vive: historia.padre_vive,
             padre_causa_fallecimiento: historia.padre_causa_fallecimiento || undefined,
             padre_enfermedad: historia.padre_enfermedad || undefined,
             hijos: historia.hijos,
@@ -249,19 +258,20 @@ export const obtenerHistoriaClinicaCompletaPorId = async (id:number): Promise<Hi
             h_farmacos: historia.h_farmacos,
             obra_social: historia.obra_social,
             material_casa: historia.material_casa,
-            electricidad: historia.electricidad === 1,
-            agua: historia.agua === 1,
-            toilet_privado: historia.toilet_privado === 1,
+            electricidad: historia.electricidad,
+            agua: historia.agua,
+            toilet_privado: historia.toilet_privado,
             calefaccion: historia.calefaccion,
             mascotas: historia.mascotas,
             otro: historia.otro
         };
+        */
 
         console.log('Exito al obtener la historia clinica con ID ', id, '.');
 
         return {
             success: true,
-            data: historiaFormateada
+            data: historia
         }
 
     } catch (error) {
@@ -317,7 +327,7 @@ export const siguienteId_old = async (): Promise<number> => {
     }
 }
 
-export const siguienteId = async (): Promise<number> => {
+export const ultimoIdHistoriaClinica = async (): Promise<number> => {
   try {
     const db = await openDatabase();
 
@@ -326,10 +336,10 @@ export const siguienteId = async (): Promise<number> => {
     );
 
     // Si no hay registros, MAX(id) será NULL, así que usamos 0 como base
-    const lastId = result?.last_id ?? 0;
-    return lastId + 1;
+    const lastId = result?.last_id ?? -1;
+    return lastId;
   } catch (error) {
     console.error("Error al obtener el siguiente ID de historias clínicas:", error);
-    return -1; // Retorna -1 en caso de error
+    return -2; // Retorna -1 en caso de error
   }
 };

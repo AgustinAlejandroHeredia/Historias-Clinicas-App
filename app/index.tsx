@@ -1,6 +1,6 @@
 import { obtenerHistoriasClinicas } from "@/db/historia_clinica_service";
-import { initDatabases } from "@/db/init_databases";
 import { HistoriaClinicaListadoModel } from "@/models/historia_clinica_model";
+import { Colors } from "@/theme/colors";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -11,6 +11,7 @@ export default function Index() {
 
   const [listadoHistorias, setListadoHistorias] = useState<HistoriaClinicaListadoModel[]>([])
   const [busqueda, setBusqueda] = useState('');
+  const [isNavigating, setIsNavigating] = useState(false)
 
 
 
@@ -20,7 +21,7 @@ export default function Index() {
     const initialize = async () => {
       try {
         //await resetDatabase() // debug only
-        await initDatabases()
+        //await initDatabases() // paso al _layout.tsx
         await cargarListado()
       }catch (error) {
         console.error("index : Error inicializando las tablas. ❌")
@@ -50,7 +51,10 @@ export default function Index() {
   }
 
   const handleNueva = () => {
+    if(isNavigating) return
+    setIsNavigating(true)
     router.push("/create")
+    setTimeout(() => setIsNavigating(false), 1000);
   };
 
 
@@ -61,7 +65,7 @@ export default function Index() {
     <View style={styles.container}>
 
       <View style={styles.row}>
-        <TouchableOpacity style={styles.botonNueva} onPress={handleNueva}>
+        <TouchableOpacity disabled={isNavigating} style={styles.botonNueva} onPress={handleNueva}>
           <Text style={styles.botonText}>+ Nueva</Text>
         </TouchableOpacity>
 
@@ -126,7 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   botonNueva: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 10,

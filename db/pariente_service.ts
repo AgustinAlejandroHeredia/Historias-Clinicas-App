@@ -32,7 +32,7 @@ export const agregarPariente = async (
             INSERT INTO pariente (
                 nota,
                 tipo,
-                historia_clinica_comun, id
+                historia_clinica_comun_id
             ) VALUES (?, ?, ?)
         `,
             [
