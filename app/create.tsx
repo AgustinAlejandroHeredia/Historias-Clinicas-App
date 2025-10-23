@@ -10,8 +10,10 @@ import { ItemModel, ItemResult } from "@/models/lt_item_model";
 import { ParienteModel, ParienteResult } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
 import { Stack, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Alert, Dimensions, FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CreateScreen() {
   
@@ -397,476 +399,536 @@ export default function CreateScreen() {
 
   const secciones = [
 
-    <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key={"datos-personales-y-motivo-consulta"}>
-      {/* Datos personales */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Datos del Paciente</Text>
-
-        <CustomInput
-            placeholder="Nombre completo *"
-            value={formData.nombre}
-            onChangeText={(text) => handleChange("nombre", text)}
-        />
-
-        <CustomInput
-            placeholder="Edad *"
-            keyboardType="numeric"
-            value={formData.edad}
-            onChangeText={(text) => handleChange("edad", text)}
-        />
-
-        <CustomInput
-            placeholder="DNI"
-            keyboardType="numeric"
-            value={formData.dni}
-            onChangeText={(text) => handleChange("dni", text)}
-        />
-
-        <CustomInput
-            placeholder="Sexo *"
-            value={formData.sexo}
-            onChangeText={(text) => handleChange("sexo", text)}
-        />
-
-        <CustomInput
-            placeholder="Estado civil"
-            value={formData.estado_civil}
-            onChangeText={(text) => handleChange("estado_civil", text)}
-        />
-
-        <CustomInput
-            placeholder="Lugar de nacimiento *"
-            value={formData.l_nacimiento}
-            onChangeText={(text) => handleChange("l_nacimiento", text)}
-        />
-
-        <CustomInput
-            placeholder="Lugar de residencia *"
-            value={formData.l_residencia}
-            onChangeText={(text) => handleChange("l_residencia", text)}
-        />
-
-        <CustomInput
-            placeholder="Ocupacion *"
-            value={formData.ocupacion}
-            onChangeText={(text) => handleChange("ocupacion", text)}
-        />
-      </View>
-
-      {/* Motivo de consulta */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Motivo de Consulta</Text>
-
-        <CustomInput
-            big
-            placeholder="Describa brevemente el motivo de la consulta... *"
-            value={formData.motivo_consulta}
-            onChangeText={(text) => handleChange("motivo_consulta", text)}
-        />
-      </View>
-      </ScrollView>,
-
-      <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key={"linea-tiempo-y-narracion"}>
-        {/* Linea de tiempo */}
+    <KeyboardAwareScrollView
+      key="datos-personales"
+      style={{ width: SCREEN_WIDTH, padding: 20 }}
+      contentContainerStyle={{ paddingBottom: 20 }}
+      enableOnAndroid={true}
+      extraScrollHeight={200}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+        {/* Datos personales */}
         <View style={styles.card}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.cardTitle}>Línea de tiempo</Text>
-            <TouchableOpacity style={styles.addButton} onPress={agregarItem}>
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.cardTitle}>Datos del Paciente</Text>
 
-          {listaItems.length === 0 ? (
-            <Text style={{ color: "#777", marginTop: 10 }}>No hay eventos agregados.</Text>
-          ) : (
-            listaItems.map((item) => (
-              <View key={item.id} style={styles.itemCard}>
-                <Text style={styles.itemFecha}>{item.fecha}</Text>
-                <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
-              </View>
-            ))
-          )}
+          <CustomInput
+              placeholder="Nombre completo *"
+              value={formData.nombre}
+              onChangeText={(text) => handleChange("nombre", text)}
+          />
 
+          <CustomInput
+              placeholder="Edad *"
+              keyboardType="numeric"
+              value={formData.edad}
+              onChangeText={(text) => handleChange("edad", text)}
+          />
+
+          <CustomInput
+              placeholder="DNI"
+              keyboardType="numeric"
+              value={formData.dni}
+              onChangeText={(text) => handleChange("dni", text)}
+          />
+
+          <CustomInput
+              placeholder="Sexo *"
+              value={formData.sexo}
+              onChangeText={(text) => handleChange("sexo", text)}
+          />
+
+          <CustomInput
+              placeholder="Estado civil"
+              value={formData.estado_civil}
+              onChangeText={(text) => handleChange("estado_civil", text)}
+          />
+
+          <CustomInput
+              placeholder="Lugar de nacimiento *"
+              value={formData.l_nacimiento}
+              onChangeText={(text) => handleChange("l_nacimiento", text)}
+          />
+
+          <CustomInput
+              placeholder="Lugar de residencia *"
+              value={formData.l_residencia}
+              onChangeText={(text) => handleChange("l_residencia", text)}
+          />
+
+          <CustomInput
+              placeholder="Ocupacion *"
+              value={formData.ocupacion}
+              onChangeText={(text) => handleChange("ocupacion", text)}
+          />
         </View>
 
-        {/* Modal para agregar item de línea de tiempo */}
-        <Modal
-          visible={modalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={cancelarNuevoItem}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>Nuevo evento</Text>
-              <Text style={styles.inputLabel}>Solo ingresar números</Text>
-              <DateInput
-                placeholder="Fecha (dd/mm/yyyy)"
-                value={nuevoItem.fecha}
-                onChangeText={(text) => setNuevoItem({ ...nuevoItem, fecha: text })}
-              />
-              <CustomInput
-                big
-                placeholder="Descripción"
-                multiline
-                numberOfLines={3}
-                value={nuevoItem.descripcion}
-                onChangeText={(text) => setNuevoItem({ ...nuevoItem, descripcion: text })}
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#ccc" }]} onPress={cancelarNuevoItem}>
-                  <Text>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, { backgroundColor: Colors.primary, }]} onPress={aceptarNuevoItem}>
-                  <Text style={{ color: "white" }}>Aceptar</Text>
-                </TouchableOpacity>
+        {/* Motivo de consulta */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Motivo de Consulta</Text>
+
+          <CustomInput
+              big
+              placeholder="Describa brevemente el motivo de la consulta... *"
+              value={formData.motivo_consulta}
+              onChangeText={(text) => handleChange("motivo_consulta", text)}
+          />
+        </View>
+        </ScrollView>
+      </KeyboardAwareScrollView>,
+
+      <KeyboardAwareScrollView
+        key="datos-personales"
+        style={{ width: SCREEN_WIDTH, padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        enableOnAndroid={true}
+        extraScrollHeight={200}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+          {/* Linea de tiempo */}
+          <View style={styles.card}>
+            <View style={styles.itemHeader}>
+              <Text style={styles.cardTitle}>Línea de tiempo</Text>
+              <TouchableOpacity style={styles.addButton} onPress={agregarItem}>
+                <Text style={styles.addButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            {listaItems.length === 0 ? (
+              <Text style={{ color: "#777", marginTop: 10 }}>No hay eventos agregados.</Text>
+            ) : (
+              listaItems.map((item) => (
+                <View key={item.id} style={styles.itemCard}>
+                  <Text style={styles.itemFecha}>{item.fecha}</Text>
+                  <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
+                </View>
+              ))
+            )}
+
+          </View>
+
+          {/* Modal para agregar item de línea de tiempo */}
+          <Modal
+            visible={modalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={cancelarNuevoItem}
+          >
+            <View style={styles.modalBackground}>
+              <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Nuevo evento</Text>
+                <Text style={styles.inputLabel}>Solo ingresar números</Text>
+                <DateInput
+                  placeholder="Fecha (dd/mm/yyyy)"
+                  value={nuevoItem.fecha}
+                  onChangeText={(text) => setNuevoItem({ ...nuevoItem, fecha: text })}
+                />
+                <CustomInput
+                  big
+                  placeholder="Descripción"
+                  multiline
+                  numberOfLines={3}
+                  value={nuevoItem.descripcion}
+                  onChangeText={(text) => setNuevoItem({ ...nuevoItem, descripcion: text })}
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#ccc" }]} onPress={cancelarNuevoItem}>
+                    <Text>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: Colors.primary, }]} onPress={aceptarNuevoItem}>
+                    <Text style={{ color: "white" }}>Aceptar</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
+          </Modal>
+
+          {/* Narracion */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Narración</Text>
+
+            <CustomInput
+                big
+                placeholder="Haga una narración acorde a la linea de tiempo establecida previamente... *"
+                value={formData.narracion}
+                onChangeText={(text) => handleChange("narracion", text)}
+            />
           </View>
-        </Modal>
+        </ScrollView>
+      </KeyboardAwareScrollView>,
 
-        {/* Narracion */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Narración</Text>
+      <KeyboardAwareScrollView
+        key="datos-personales"
+        style={{ width: SCREEN_WIDTH, padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        enableOnAndroid={true}
+        extraScrollHeight={200}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+          {/* Antecedentes de enfermedad actual */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Antecedentes de enfermedad</Text>
 
-          <CustomInput
-              big
-              placeholder="Haga una narración acorde a la linea de tiempo establecida previamente... *"
-              value={formData.narracion}
-              onChangeText={(text) => handleChange("narracion", text)}
-          />
-        </View>
-      </ScrollView>,
-
-      <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key={"enfermedadactual-alergias-antecedentes-personales"}>
-        {/* Antecedentes de enfermedad actual */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Antecedentes de enfermedad</Text>
-
-          <CustomInput
-              big
-              placeholder="Haga una descripción de los antecedentes de la enfermedad actual del paciente... *"
-              value={formData.antecedentes_enfermedad}
-              onChangeText={(text) => handleChange("antecedentes_enfermedad", text)}
-          />
-        </View>
-
-        {/* Alergias */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Alergias</Text>
-
-          <CustomInput
-              big
-              placeholder="Alergias del paciente... *"
-              value={formData.alergias}
-              onChangeText={(text) => handleChange("alergias", text)}
-          />
-        </View>
-
-        {/* Antecedentes personales */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Antecedentes personales</Text>
-
-          <Text style={styles.inputLabel}>Antecedentes fisiológicos</Text>
-          <CustomInput
-              big
-              placeholder="Antecedentes fisiológicos... *"
-              value={formData.antecedentes_fisiologicos}
-              onChangeText={(text) => handleChange("antecedentes_fisiologicos", text)}
-          />
-
-          <Text style={styles.inputLabel}>Antecedentes patológicos</Text>
-          <CustomInput
-              big
-              placeholder="Antecedentes patológicos... *"
-              value={formData.antecedentes_patologicos}
-              onChangeText={(text) => handleChange("antecedentes_patologicos", text)}
-          />
-
-          <Text style={styles.inputLabel}>Antecedentes quirúrgicos</Text>
-          <CustomInput
-              big
-              placeholder="Antecedentes quirúrgicos... *"
-              value={formData.antecedentes_quirurgicos}
-              onChangeText={(text) => handleChange("antecedentes_quirurgicos", text)}
-          />
-
-          <Text style={styles.inputLabel}>Antecedentes farmacológicos</Text>
-          <CustomInput
-              big
-              placeholder="Antecedentes farmacológicos... *"
-              value={formData.antecedentes_farmacologicos}
-              onChangeText={(text) => handleChange("antecedentes_farmacologicos", text)}
-          />
-        </View>
-      </ScrollView>,
-
-      <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key={"dantecedentes-familiares"}>
-        {/* Antecedentes familiares */}
-
-        {/* Padres */}
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Antecedentes familiares</Text>
-
-          <Text style={styles.inputLabelBigger}>Madre</Text>
-          <Text style={styles.inputLabel}>¿Vive?</Text>
-          <BinaryChoice
-            value={formData.madre_vive as "si" | "no" | ""}
-            onChange={(val) => handleChange("madre_vive", val)}
-          />
-          {formData.madre_vive === "no" && (
             <CustomInput
-              small
-              placeholder="Causa de fallecimiento..."
-              value={formData.madre_causa_fallecimiento}
-              onChangeText={(text) => handleChange("madre_causa_fallecimiento", text)}
+                big
+                placeholder="Haga una descripción de los antecedentes de la enfermedad actual del paciente... *"
+                value={formData.antecedentes_enfermedad}
+                onChangeText={(text) => handleChange("antecedentes_enfermedad", text)}
             />
-          )}
-          <Text style={styles.inputLabel}>Padece alguna enfermedad?</Text>
-          <CustomInput
-            mid
-            placeholder="Enfermedad/es de la madre..."
-            value={formData.madre_enfermedad}
-            onChangeText={(text) => handleChange("madre_enfermedad", text)}
-          />
+          </View>
 
-          <Text style={styles.inputLabelBigger}>Padre</Text>
-          <Text style={styles.inputLabel}>¿Vive?</Text>
-          <BinaryChoice
-            value={formData.padre_vive as "si" | "no" | ""}
-            onChange={(val) => handleChange("padre_vive", val)}
-          />
-          {formData.padre_vive === "no" && (
+          {/* Alergias */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Alergias</Text>
+
             <CustomInput
-              small
-              placeholder="Causa de fallecimiento..."
-              value={formData.padre_causa_fallecimiento}
-              onChangeText={(text) => handleChange("padre_causa_fallecimiento", text)}
+                big
+                placeholder="Alergias del paciente... *"
+                value={formData.alergias}
+                onChangeText={(text) => handleChange("alergias", text)}
             />
-          )}
-          <Text style={styles.inputLabel}>Padece alguna enfermedad?</Text>
-          <CustomInput
-            mid
-            placeholder="Enfermedad/es del padre..."
-            value={formData.padre_enfermedad}
-            onChangeText={(text) => handleChange("padre_enfermedad", text)}
-          />
+          </View>
 
-          {/* Hijos / Hermanos */}
+          {/* Antecedentes personales */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Antecedentes personales</Text>
 
-          <Text style={styles.inputLabelBigger}>Hijos</Text>
-          <Text style={styles.inputLabel}>¿Cuántos?</Text>
-
-          <NumberPicker
-            value={cantHijos}
-            onChange={(num) => handleCantidadHijos(num)}
-          />
-
-          {listaHijos.map((hijo, i) => (
+            <Text style={styles.inputLabel}>Antecedentes fisiológicos</Text>
             <CustomInput
-              small
-              key={`hijo_${i}`}
-              placeholder={`Información del hijo ${i + 1}`}
-              value={hijo.nota}
-              onChangeText={(text) => handleParienteNota("hijo", i, text)}
+                big
+                placeholder="Antecedentes fisiológicos... *"
+                value={formData.antecedentes_fisiologicos}
+                onChangeText={(text) => handleChange("antecedentes_fisiologicos", text)}
             />
-          ))}
 
-          {/* Sección de Hermanos */}
-          <Text style={styles.inputLabelBigger}>Hermanos</Text>
-          <Text style={styles.inputLabel}>¿Cuántos?</Text>
-
-          <NumberPicker
-            value={cantHermanos}
-            onChange={(num) => handleCantidadHermanos(num)}
-          />
-
-          {listaHermanos.map((hermano, i) => (
+            <Text style={styles.inputLabel}>Antecedentes patológicos</Text>
             <CustomInput
-              small
-              key={`hermano_${i}`}
-              placeholder={`Información del hermano ${i + 1}`}
-              value={hermano.nota}
-              onChangeText={(text) => handleParienteNota("hermano", i, text)}
+                big
+                placeholder="Antecedentes patológicos... *"
+                value={formData.antecedentes_patologicos}
+                onChangeText={(text) => handleChange("antecedentes_patologicos", text)}
             />
-          ))}
 
-        </View>
-      </ScrollView>,
+            <Text style={styles.inputLabel}>Antecedentes quirúrgicos</Text>
+            <CustomInput
+                big
+                placeholder="Antecedentes quirúrgicos... *"
+                value={formData.antecedentes_quirurgicos}
+                onChangeText={(text) => handleChange("antecedentes_quirurgicos", text)}
+            />
 
-      <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key={"habitos"}>
-        {/* Habitos */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Hábitos</Text>
+            <Text style={styles.inputLabel}>Antecedentes farmacológicos</Text>
+            <CustomInput
+                big
+                placeholder="Antecedentes farmacológicos... *"
+                value={formData.antecedentes_farmacologicos}
+                onChangeText={(text) => handleChange("antecedentes_farmacologicos", text)}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAwareScrollView>,
 
-          <Text style={styles.inputLabel}>Alimentacion</Text>
-          <CustomInput
-              big
-              placeholder="H. de alimentación..."
-              value={formData.h_alimentacion}
-              onChangeText={(text) => handleChange("h_alimentacion", text)}
-          />
+      <KeyboardAwareScrollView
+        key="datos-personales"
+        style={{ width: SCREEN_WIDTH, padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        enableOnAndroid={true}
+        extraScrollHeight={200}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+          {/* Antecedentes familiares */}
 
-          <Text style={styles.inputLabel}>Diuresis</Text>
-          <CustomInput
-              big
-              placeholder="H. de diuresis..."
-              value={formData.h_diuresis}
-              onChangeText={(text) => handleChange("h_diuresis", text)}
-          />
+          {/* Padres */}
 
-          <Text style={styles.inputLabel}>Catarsis</Text>
-          <CustomInput
-              big
-              placeholder="H. de catarsis..."
-              value={formData.h_catarsis}
-              onChangeText={(text) => handleChange("h_catarsis", text)}
-          />
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Antecedentes familiares</Text>
 
-          <Text style={styles.inputLabel}>Sueño</Text>
-          <CustomInput
-              big
-              placeholder="H. de sueño..."
-              value={formData.h_sueño}
-              onChangeText={(text) => handleChange("h_sueño", text)}
-          />
+            <Text style={styles.inputLabelBigger}>Madre</Text>
+            <Text style={styles.inputLabel}>¿Vive?</Text>
+            <BinaryChoice
+              value={formData.madre_vive as "si" | "no" | ""}
+              onChange={(val) => handleChange("madre_vive", val)}
+            />
+            {formData.madre_vive === "no" && (
+              <CustomInput
+                small
+                placeholder="Causa de fallecimiento..."
+                value={formData.madre_causa_fallecimiento}
+                onChangeText={(text) => handleChange("madre_causa_fallecimiento", text)}
+              />
+            )}
+            <Text style={styles.inputLabel}>Padece alguna enfermedad?</Text>
+            <CustomInput
+              mid
+              placeholder="Enfermedad/es de la madre..."
+              value={formData.madre_enfermedad}
+              onChangeText={(text) => handleChange("madre_enfermedad", text)}
+            />
 
-          <Text style={styles.inputLabel}>Alcohol/tabaco</Text>
-          <CustomInput
-              big
-              placeholder="H. de alcohol/tabaco..."
-              value={formData.h_alcohol_tabaco}
-              onChangeText={(text) => handleChange("h_alcohol_tabaco", text)}
-          />
+            <Text style={styles.inputLabelBigger}>Padre</Text>
+            <Text style={styles.inputLabel}>¿Vive?</Text>
+            <BinaryChoice
+              value={formData.padre_vive as "si" | "no" | ""}
+              onChange={(val) => handleChange("padre_vive", val)}
+            />
+            {formData.padre_vive === "no" && (
+              <CustomInput
+                small
+                placeholder="Causa de fallecimiento..."
+                value={formData.padre_causa_fallecimiento}
+                onChangeText={(text) => handleChange("padre_causa_fallecimiento", text)}
+              />
+            )}
+            <Text style={styles.inputLabel}>Padece alguna enfermedad?</Text>
+            <CustomInput
+              mid
+              placeholder="Enfermedad/es del padre..."
+              value={formData.padre_enfermedad}
+              onChangeText={(text) => handleChange("padre_enfermedad", text)}
+            />
 
-          <Text style={styles.inputLabel}>Infusiones</Text>
-          <CustomInput
-              big
-              placeholder="H. de infusiones..."
-              value={formData.h_infusiones}
-              onChangeText={(text) => handleChange("h_infusiones", text)}
-          />
+            {/* Hijos / Hermanos */}
 
-          <Text style={styles.inputLabel}>Fármacos</Text>
-          <CustomInput
-              big
-              placeholder="H. de fármacos..."
-              value={formData.h_farmacos}
-              onChangeText={(text) => handleChange("h_farmacos", text)}
-          />
-        </View>
-      </ScrollView>,
+            <Text style={styles.inputLabelBigger}>Hijos</Text>
+            <Text style={styles.inputLabel}>¿Cuántos?</Text>
 
-      <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key={"caracteristicas-socioeconomicas"}>
-        {/* Caracteristicas socioeconomicas */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Características socioeconómicas</Text>
+            <NumberPicker
+              value={cantHijos}
+              onChange={(num) => handleCantidadHijos(num)}
+            />
 
-          <Text style={styles.inputLabel}>Obra social</Text>
-          <CustomInput
-              placeholder="Obra social..."
-              value={formData.obra_social}
-              onChangeText={(text) => handleChange("obra_social", text)}
-          />
+            {listaHijos.map((hijo, i) => (
+              <CustomInput
+                small
+                key={`hijo_${i}`}
+                placeholder={`Información del hijo ${i + 1}`}
+                value={hijo.nota}
+                onChangeText={(text) => handleParienteNota("hijo", i, text)}
+              />
+            ))}
 
-          <Text style={styles.inputLabel}>Material de la casa</Text>
-          <CustomInput
-              big
-              placeholder="Material del que este hecha la vivienda..."
-              value={formData.material_casa}
-              onChangeText={(text) => handleChange("material_casa", text)}
-          />
+            {/* Sección de Hermanos */}
+            <Text style={styles.inputLabelBigger}>Hermanos</Text>
+            <Text style={styles.inputLabel}>¿Cuántos?</Text>
 
-          <Text style={styles.inputLabel}>Electricidad</Text>
-          <BinaryChoice
-            value={formData.electricidad as "si" | "no" | ""}
-            onChange={(val) => handleChange("electricidad", val)}
-          />
+            <NumberPicker
+              value={cantHermanos}
+              onChange={(num) => handleCantidadHermanos(num)}
+            />
 
-          <Text style={styles.inputLabel}>Agua corriente</Text>
-          <BinaryChoice
-            value={formData.agua as "si" | "no" | ""}
-            onChange={(val) => handleChange("agua", val)}
-          />
+            {listaHermanos.map((hermano, i) => (
+              <CustomInput
+                small
+                key={`hermano_${i}`}
+                placeholder={`Información del hermano ${i + 1}`}
+                value={hermano.nota}
+                onChangeText={(text) => handleParienteNota("hermano", i, text)}
+              />
+            ))}
 
-          <Text style={styles.inputLabel}>Baño privado</Text>
-          <BinaryChoice
-            value={formData.toilet_privado as "si" | "no" | ""}
-            onChange={(val) => handleChange("toilet_privado", val)}
-          />
+          </View>
+        </ScrollView>
+      </KeyboardAwareScrollView>,
 
-          <Text style={styles.inputLabel}>Calefacción</Text>
-          <CustomInput
-              big
-              placeholder="Calefacción..."
-              value={formData.calefaccion}
-              onChangeText={(text) => handleChange("calefaccion", text)}
-          />
+      <KeyboardAwareScrollView
+        key="datos-personales"
+        style={{ width: SCREEN_WIDTH, padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        enableOnAndroid={true}
+        extraScrollHeight={200}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+          {/* Habitos */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Hábitos</Text>
 
-          <Text style={styles.inputLabel}>Mascotas</Text>
-          <CustomInput
-              big
-              placeholder="Mascotas que tenga el paciente..."
-              value={formData.mascotas}
-              onChangeText={(text) => handleChange("mascotas", text)}
-          />
+            <Text style={styles.inputLabel}>Alimentacion</Text>
+            <CustomInput
+                big
+                placeholder="H. de alimentación..."
+                value={formData.h_alimentacion}
+                onChangeText={(text) => handleChange("h_alimentacion", text)}
+            />
 
-          <Text style={styles.inputLabel}>Otros</Text>
-          <CustomInput
-              big
-              placeholder="Otras caracteristicas extras a agregar..."
-              value={formData.otro}
-              onChangeText={(text) => handleChange("otro", text)}
-          />
+            <Text style={styles.inputLabel}>Diuresis</Text>
+            <CustomInput
+                big
+                placeholder="H. de diuresis..."
+                value={formData.h_diuresis}
+                onChangeText={(text) => handleChange("h_diuresis", text)}
+            />
 
-        </View>
+            <Text style={styles.inputLabel}>Catarsis</Text>
+            <CustomInput
+                big
+                placeholder="H. de catarsis..."
+                value={formData.h_catarsis}
+                onChangeText={(text) => handleChange("h_catarsis", text)}
+            />
 
-        {/* Botones al final */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: "#ccc" }]}
-            onPress={() => {
-              Alert.alert(
-                "Confirmar",
-                "¿Seguro que quieres cancelar?",
-                [
-                  { text: "No", style: "cancel" },
-                  { text: "Sí", onPress: () => retroceder() }
-                ]
-              );
-            }}
-          >
-            <Text style={styles.actionButtonText}>Cancelar</Text>
-          </TouchableOpacity>
+            <Text style={styles.inputLabel}>Sueño</Text>
+            <CustomInput
+                big
+                placeholder="H. de sueño..."
+                value={formData.h_sueño}
+                onChangeText={(text) => handleChange("h_sueño", text)}
+            />
 
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: Colors.primary }]}
-            onPress={() => {
-              const faltantes = validarCamposObligatorios(formData);
-              if (faltantes.length > 0) {
+            <Text style={styles.inputLabel}>Alcohol/tabaco</Text>
+            <CustomInput
+                big
+                placeholder="H. de alcohol/tabaco..."
+                value={formData.h_alcohol_tabaco}
+                onChangeText={(text) => handleChange("h_alcohol_tabaco", text)}
+            />
+
+            <Text style={styles.inputLabel}>Infusiones</Text>
+            <CustomInput
+                big
+                placeholder="H. de infusiones..."
+                value={formData.h_infusiones}
+                onChangeText={(text) => handleChange("h_infusiones", text)}
+            />
+
+            <Text style={styles.inputLabel}>Fármacos</Text>
+            <CustomInput
+                big
+                placeholder="H. de fármacos..."
+                value={formData.h_farmacos}
+                onChangeText={(text) => handleChange("h_farmacos", text)}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAwareScrollView>,
+
+      <KeyboardAwareScrollView
+        key="datos-personales"
+        style={{ width: SCREEN_WIDTH, padding: 20 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        enableOnAndroid={true}
+        extraScrollHeight={200}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+          {/* Caracteristicas socioeconomicas */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Características socioeconómicas</Text>
+
+            <Text style={styles.inputLabel}>Obra social</Text>
+            <CustomInput
+                placeholder="Obra social..."
+                value={formData.obra_social}
+                onChangeText={(text) => handleChange("obra_social", text)}
+            />
+
+            <Text style={styles.inputLabel}>Material de la casa</Text>
+            <CustomInput
+                big
+                placeholder="Material del que este hecha la vivienda..."
+                value={formData.material_casa}
+                onChangeText={(text) => handleChange("material_casa", text)}
+            />
+
+            <Text style={styles.inputLabel}>Electricidad</Text>
+            <BinaryChoice
+              value={formData.electricidad as "si" | "no" | ""}
+              onChange={(val) => handleChange("electricidad", val)}
+            />
+
+            <Text style={styles.inputLabel}>Agua corriente</Text>
+            <BinaryChoice
+              value={formData.agua as "si" | "no" | ""}
+              onChange={(val) => handleChange("agua", val)}
+            />
+
+            <Text style={styles.inputLabel}>Baño privado</Text>
+            <BinaryChoice
+              value={formData.toilet_privado as "si" | "no" | ""}
+              onChange={(val) => handleChange("toilet_privado", val)}
+            />
+
+            <Text style={styles.inputLabel}>Calefacción</Text>
+            <CustomInput
+                big
+                placeholder="Calefacción..."
+                value={formData.calefaccion}
+                onChangeText={(text) => handleChange("calefaccion", text)}
+            />
+
+            <Text style={styles.inputLabel}>Mascotas</Text>
+            <CustomInput
+                big
+                placeholder="Mascotas que tenga el paciente..."
+                value={formData.mascotas}
+                onChangeText={(text) => handleChange("mascotas", text)}
+            />
+
+            <Text style={styles.inputLabel}>Otros</Text>
+            <CustomInput
+                big
+                placeholder="Otras caracteristicas extras a agregar..."
+                value={formData.otro}
+                onChangeText={(text) => handleChange("otro", text)}
+            />
+
+          </View>
+
+          {/* Botones al final */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: "#ccc" }]}
+              onPress={() => {
                 Alert.alert(
-                  "Campos faltantes",
-                  faltantes.map(f => `• ${f}`).join("\n")
+                  "Confirmar",
+                  "¿Seguro que quieres cancelar?",
+                  [
+                    { text: "No", style: "cancel" },
+                    { text: "Sí", onPress: () => retroceder() }
+                  ]
                 );
-                return;
-              }
+              }}
+            >
+              <Text style={styles.actionButtonText}>Cancelar</Text>
+            </TouchableOpacity>
 
-              Alert.alert(
-                "Confirmar",
-                "¿Seguro que quieres guardar esta historia?",
-                [
-                  { text: "No", style: "cancel" },
-                  { text: "Sí", onPress: () => guardarDatos() }
-                ]
-              );
-            }}
-          >
-            <Text style={[styles.actionButtonText, { color: "white" }]}>Aceptar</Text>
-          </TouchableOpacity>
-        </View>
-      
-      </ScrollView>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: Colors.primary }]}
+              onPress={() => {
+                const faltantes = validarCamposObligatorios(formData);
+                if (faltantes.length > 0) {
+                  Alert.alert(
+                    "Campos faltantes",
+                    faltantes.map(f => `• ${f}`).join("\n")
+                  );
+                  return;
+                }
+
+                Alert.alert(
+                  "Confirmar",
+                  "¿Seguro que quieres guardar esta historia?",
+                  [
+                    { text: "No", style: "cancel" },
+                    { text: "Sí", onPress: () => guardarDatos() }
+                  ]
+                );
+              }}
+            >
+              <Text style={[styles.actionButtonText, { color: "white" }]}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        
+        </ScrollView>
+      </KeyboardAwareScrollView>
 
   ]
 
@@ -875,46 +937,48 @@ export default function CreateScreen() {
   // VISTA
 
   return (
-    <>
-    <Stack.Screen
-        options={{
-          title: "Crear Historia Clínica",
-          headerBackVisible: false, // elimino la flecha de retroceso para evitar errores del user y mantener consistencia visual
-          headerShown: true,
-        }}
-      />
-
-    <View style={{ flex: 1 }}>
-      {/* Paginación arriba */}
-      <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 10 }}>
-        {secciones.map((_, index) => (
-          <View
-            key={`dot_${index}`}
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              marginHorizontal: 5,
-              backgroundColor: index === activeIndex ? Colors.primary : "#ccc",
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} >
+        <>
+        <Stack.Screen
+            options={{
+              title: "Crear Historia Clínica",
+              headerBackVisible: false, // elimino la flecha de retroceso para evitar errores del user y mantener consistencia visual
+              headerShown: true,
             }}
           />
-        ))}
-      </View>
 
-      {/* FlatList horizontal */}
-      <FlatList
-        ref={flatListRef}
-        data={secciones}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item }) => item}
-        onScroll={onScroll}
-        scrollEventThrottle={16} // para actualizar smooth el activeIndex
-      />
-    </View>
-    </>
+        <View style={{ flex: 1 }}>
+          {/* Paginación arriba */}
+          <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 10 }}>
+            {secciones.map((_, index) => (
+              <View
+                key={`dot_${index}`}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  marginHorizontal: 5,
+                  backgroundColor: index === activeIndex ? Colors.primary : "#ccc",
+                }}
+              />
+            ))}
+          </View>
+
+          {/* FlatList horizontal */}
+          <FlatList
+            ref={flatListRef}
+            data={secciones}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(_, index) => index.toString()}
+            renderItem={({ item }) => item}
+            onScroll={onScroll}
+            scrollEventThrottle={16} // para actualizar smooth el activeIndex
+          />
+        </View>
+        </>
+    </SafeAreaView>
   );
 }
 
