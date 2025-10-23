@@ -64,13 +64,29 @@ export default function ViewScreen() {
     }
 
     const obtenerDatosParientes = async () => {
-        const response : ParienteListaResult = await obtenerParientesPorHistoria(idNum)
-        if(!response.success) {
-            throw new Error("create : Error obteniendo parientes ❌")
+      try {
+        const response: ParienteListaResult = await obtenerParientesPorHistoria(idNum)
+
+        if (!response.success) {
+          throw new Error("create: Error obteniendo parientes ❌")
         }
-        setListaHijos(listaParientes.filter(p => p.tipo === "hijo"))
-        setListaHermanos(listaParientes.filter(p => p.tipo === "hermano"))
-    }
+
+        console.log("Datos crudos:", response.data)
+
+        const parientes: ParienteModel[] = response.data as ParienteModel[] || []
+
+        const hijos = parientes.filter(p => p.tipo === "hijo")
+        const hermanos = parientes.filter(p => p.tipo === "hermano")
+
+        console.log("Hijos:", hijos)
+        console.log("Hermanos:", hermanos)
+
+        setListaHijos(hijos)
+        setListaHermanos(hermanos)
+      } catch (error) {
+        console.error("Error en obtenerDatosParientes:", error)
+      }
+    };
 
     const retroceder = () => {
       if (router.canGoBack()) {
