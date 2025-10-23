@@ -1,8 +1,8 @@
 import { obtenerHistoriasClinicas } from "@/db/historia_clinica_service";
 import { HistoriaClinicaListadoModel } from "@/models/historia_clinica_model";
 import { Colors } from "@/theme/colors";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function Index() {
@@ -24,11 +24,30 @@ export default function Index() {
         //await initDatabases() // paso al _layout.tsx
         await cargarListado()
       }catch (error) {
-        console.error("index : Error inicializando las tablas. ❌")
+        console.error("index : Error inicializando las tablas ❌: ", error)
       }
     }
     initialize()
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      const fetchData = async () => {
+        try {
+          await cargarListado()
+        } catch (error) {
+          console.error("Error recargando historias ❌: ", error)
+        }
+      };
+      if (isActive) {
+        fetchData();
+      }
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   const cargarListado = async (): Promise<void> => {
     try {
@@ -47,7 +66,7 @@ export default function Index() {
   }
 
   const seleccionDeHistoria = (id: number) => {
-    router.push(`/view?id=${id}`)
+    router.push({ pathname: "/view", params: { id: id.toString() } })
   }
 
   const handleNueva = () => {

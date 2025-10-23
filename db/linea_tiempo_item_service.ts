@@ -14,10 +14,10 @@ export const initDatabaseLineaTiempoItem = async () => {
                 FOREIGN KEY (historia_clinica_comun_id) REFERENCES historia_clinica_comun(id) ON DELETE CASCADE
             );
         `);
-        console.log("Tabla lt_item ✅")
+        console.log("lt_item_service : Tabla lt_item ✅")
         
     } catch (error) {
-        console.log('Error inicializando la base de datos en linea_tiempo_item_service.ts.')
+        console.log('lt_item_service : Error inicializando la base de datos en linea_tiempo_item_service.ts.')
         throw error
     }
 }
@@ -42,14 +42,14 @@ export const agregarLineaTiempoItem = async (
                 itemData.historia_clinica_comun_id
             ]
         );
-        console.log("Item agregado exitosamente a la historia con id ", result.lastInsertRowId)
+        console.log("lt_item_service : Item agregado exitosamente a la historia con id ", result.lastInsertRowId)
         return {
             success: true,
             id: result.lastInsertRowId
         }
 
     } catch (error) {
-        console.error("Error al agrgar un item nuevo.")
+        console.error("lt_item_service : Error al agrgar un item nuevo.")
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error'
@@ -65,18 +65,18 @@ export const obtenerItemsPorHistoriaId = async (
         
         const db = await openDatabase()
         const result = await db.getAllAsync(
-            'SELECT * FROM lt_items WHERE historia_clinica_comun_id = ?',
+            'SELECT * FROM lt_item WHERE historia_clinica_comun_id = ?',
             [historiaClinicaId]
         );
         
-        console.log("Items obtenidos exitosamente para la historia clinica con id ", historiaClinicaId, ".")
+        console.log("lt_item_service : Items obtenidos exitosamente para la historia clinica con id ", historiaClinicaId, ".")
         return {
             success: true,
             data: result as ItemListaModel[]
         }
 
     } catch (error) {
-        console.error("Error al obtener un item nuevo con id de historia clinica.")
+        console.error("lt_item_service : Error al obtener un item nuevo con id de historia clinica.")
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error'
@@ -99,19 +99,19 @@ export const eliminarItemPorId = async (
         if(result.changes === 0){
             return {
                 success: false,
-                error: 'No se encontro el item con la id proporcionada.'
+                error: 'lt_item_service : No se encontro el item con la id proporcionada.'
             }
         }
 
-        console.log("Exito al eliminar el item con id ", id, " ✅")
+        console.log("lt_item_service : Exito al eliminar el item con id ", id, " ✅")
         return {
             success: true,
             changes: result.changes,
-            message: 'Item eliminado exitosamente ✅'
+            message: 'lt_item_service : Item eliminado exitosamente ✅'
         }
 
     } catch (error) {
-        console.error("Error al eliminar el item con id ", id, " ❌")
+        console.error("lt_item_service : Error al eliminar el item con id ", id, " ❌: ", error)
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Error desconocido'

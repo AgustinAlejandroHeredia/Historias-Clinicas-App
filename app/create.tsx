@@ -300,7 +300,7 @@ export default function CreateScreen() {
 
         const itemNuevo : ItemModel = {
           fecha: item.fecha,
-          descripcion: item.fecha,
+          descripcion: item.descripcion,
           historia_clinica_comun_id: response_historia.id!
         }
 

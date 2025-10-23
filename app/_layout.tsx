@@ -45,7 +45,7 @@ export default function RootLayout() {
     <Stack>
       <Stack.Screen name="index" options={{ title: "Home", headerLeft: () => null }} />
       <Stack.Screen name="create" options={{ title: "Nueva Historia Clínica", headerLeft: () => null }} />
-      <Stack.Screen name="view" options={{ title: "Ver Historia Clínica", headerLeft: () => null }} />
+      <Stack.Screen name="view" options={{ title: "Ver Historia Clínica", headerBackVisible: false, }} />
     </Stack>
   );
 }
