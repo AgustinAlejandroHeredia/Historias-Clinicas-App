@@ -7,8 +7,8 @@ import { ItemListaResult, ItemModel } from "@/models/lt_item_model";
 import { ParienteListaResult, ParienteModel } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Dimensions, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ViewScreen() {
 
@@ -121,191 +121,242 @@ export default function ViewScreen() {
 
 
 
+    const SCREEN_WIDTH = Dimensions.get("window").width
+    const [activeIndex, setActiveIndex] = useState(0)
+    const flatListRef = useRef<FlatList>(null)
+
+    // captura cuanto se movio en el scroll lateral en relacion al ancho de la pantalla para saber en que seccion esta el user
+    const onScroll = (event: any) => {
+      const x = event.nativeEvent.contentOffset.x
+      const newIndex = Math.round(x / SCREEN_WIDTH)
+      setActiveIndex(newIndex)
+    };
+
+    const secciones = [
+
+            // datos de paciente y motivo de consulta
+            <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key="datos-paciente">
+              <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Datos del Paciente</Text>
+                  <InfoField label="Nombre" value={historiaClinica?.nombre}/>
+                  <InfoField label="Edad" value={historiaClinica?.edad}/>
+                  <InfoField label="DNI" value={historiaClinica?.dni}/>
+                  <InfoField label="Sexo" value={historiaClinica?.sexo}/>
+                  <InfoField label="Estado civil" value={historiaClinica?.estado_civil}/>
+                  <InfoField label="Lugar de nacimiento" value={historiaClinica?.l_nacimiento}/>
+                  <InfoField label="Ligar de residencia" value={historiaClinica?.l_residencia}/>
+                  <InfoField label="Ocupacion" value={historiaClinica?.ocupacion}/>
+              </View>
+
+              <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Motivo de consulta</Text>
+                  <InfoField value={historiaClinica?.motivo_consulta}/>
+              </View>
+            </ScrollView>,
+
+            // linea de tiempo y narracion
+            <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key="linea-de-tiempo">
+              <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Linea de tiempo</Text>
+                  {listaItems.length === 0 ? (
+                      <Text style={{ color: "#777", marginTop: 10 }}>No hay eventos agregados.</Text>
+                      ) : (
+                      listaItems.map((item) => (
+                          <View key={item.id} style={styles.itemCard}>
+                          <Text style={styles.itemFecha}>{item.fecha}</Text>
+                          <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
+                          </View>
+                      ))
+                  )}
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Narracion</Text>
+                <InfoField value={historiaClinica?.narracion}/>
+              </View>
+            </ScrollView>,
+
+            // antecedentes de enfermedad actual, peronales y alergias
+            <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key="linea-de-tiempo">
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Antecedentes de enfermedad actual</Text>
+                <InfoField value={historiaClinica?.antecedentes_enfermedad}/>
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Alergias</Text>
+                <InfoField value={historiaClinica?.alergias}/>
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Antecedentes personales</Text>
+                <InfoField label="Antecedentes fisiológicos" value={historiaClinica?.antecedentes_fisiologicos}/>
+                <InfoField label="Antecedentes patológicos" value={historiaClinica?.antecedentes_patologicos}/>
+                <InfoField label="Antecedentes quirúrgicos" value={historiaClinica?.antecedentes_quirurgicos}/>
+                <InfoField label="Antecedentes farmacológicos" value={historiaClinica?.antecedentes_farmacologicos}/>
+              </View>
+            </ScrollView>,
+
+            // antecedentes familiares
+            <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key="linea-de-tiempo">
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Antecedentes familiares</Text>
+
+                {/* Padres */}
+
+                <InfoField label="Madre vive" value={capitalizar(historiaClinica?.madre_vive)}/>
+                {historiaClinica?.madre_vive === "no" && (
+                  <InfoField label="Causa de fallecimiento" value={historiaClinica?.madre_causa_fallecimiento}/>
+                )}
+                <InfoField label="Enfermedad (madre)" value={historiaClinica?.madre_enfermedad}/>
+
+                <InfoField label="Padre vive" value={capitalizar(historiaClinica?.padre_vive)}/>
+                {historiaClinica?.padre_vive === "no" && (
+                  <InfoField label="Causa de fallecimiento" value={historiaClinica?.padre_causa_fallecimiento}/>
+                )}
+                <InfoField label="Enfermedad (padre)" value={historiaClinica?.padre_enfermedad}/>
+
+                {/* Hijos */}
+
+                {listaHijos.length > 0 ? (
+                  listaHijos.map((hijo, i) => (
+                    <InfoField key={`hijo_${i}`} label={`Hijo ${i+1}`} value={hijo.nota}/>
+                  ))
+                ) : (
+                  <Text style={styles.infoText}>Sin hijos registrados</Text>
+                )}
+
+                {/* Hermanos */}
+
+                {listaHermanos.length > 0 ? (
+                  listaHermanos.map((hermano, i) => (
+                    <InfoField key={`hermano_${i}`} label={`Hermano ${i+1}`} value={hermano.nota}/>
+                  ))
+                ) : (
+                  <Text style={styles.infoText}>Sin hermanos registrados</Text>
+                )}
+                
+              </View>
+            </ScrollView>,
+
+            // habitos
+            <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key="habitos">
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Hábitos</Text>
+
+                {(
+                  historiaClinica?.h_alimentacion ||
+                  historiaClinica?.h_diuresis ||
+                  historiaClinica?.h_catarsis ||
+                  historiaClinica?.h_sueño ||
+                  historiaClinica?.h_alcohol_tabaco ||
+                  historiaClinica?.h_infusiones ||
+                  historiaClinica?.h_farmacos
+                ) ? (
+                  <>
+                    <InfoField label="Hábitos de alimentación" value={historiaClinica?.h_alimentacion} />
+                    <InfoField label="Hábitos de diuresis" value={historiaClinica?.h_diuresis} />
+                    <InfoField label="Hábitos de catarsis" value={historiaClinica?.h_catarsis} />
+                    <InfoField label="Hábitos de sueño" value={historiaClinica?.h_sueño} />
+                    <InfoField label="Hábitos de alcohol / tabaco" value={historiaClinica?.h_alcohol_tabaco} />
+                    <InfoField label="Hábitos de infusiones" value={historiaClinica?.h_infusiones} />
+                    <InfoField label="Hábitos de fármacos" value={historiaClinica?.h_farmacos} />
+                  </>
+                ) : (
+                  <Text style={styles.infoText}>No se registró nungún hábito del paciente.</Text>
+                )}
+              </View>
+            </ScrollView>,
+
+            // caracteristicas socioeconomicas y fin
+            <ScrollView style={{ width: SCREEN_WIDTH, padding: 20 }} key="caracteristicas-socioeconomicas-y-fin">
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>Características socioeconómicas</Text>
+
+                {(
+                  historiaClinica?.obra_social ||
+                  historiaClinica?.material_casa ||
+                  historiaClinica?.electricidad ||
+                  historiaClinica?.agua ||
+                  historiaClinica?.toilet_privado ||
+                  historiaClinica?.calefaccion ||
+                  historiaClinica?.mascotas ||
+                  historiaClinica?.otro
+                ) ? (
+                  <>
+                    <InfoField label="Obra social" value={historiaClinica?.obra_social} />
+                    <InfoField label="Material de la casa" value={historiaClinica?.material_casa} />
+                    <InfoField label="Electricidad" value={capitalizar(historiaClinica?.electricidad)} />
+                    <InfoField label="Agua corriente" value={capitalizar(historiaClinica?.agua)} />
+                    <InfoField label="Baño privado" value={capitalizar(historiaClinica?.toilet_privado)} />
+                    <InfoField label="Calefacción" value={historiaClinica?.calefaccion} />
+                    <InfoField label="Mascotas" value={historiaClinica?.mascotas} />
+                    <InfoField label="Otro" value={historiaClinica?.otro} />
+                  </>
+                ) : (
+                  <Text style={styles.infoText}>No se registró nunguna caracteristica socioeconomica.</Text>
+                )}
+              </View>
+
+              <View style={styles.buttonContainerRight}>
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: "#881f1fff", width: 150 }]}
+                  onPress={() => {
+                    Alert.alert(
+                      "Confirmar",
+                      "¿Seguro que quieres eliminar esta historia?",
+                      [
+                        { text: "No", style: "cancel" },
+                        { text: "Sí", onPress: () => eliminarHistoriaClinicaView() }
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={[styles.actionButtonText, { color: "white" }]}>
+                    Eliminar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+    ]
+
+
+
 
 
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-            
-            {/* Datos del paciente */}
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>Datos del Paciente</Text>
-                <InfoField label="Nombre" value={historiaClinica?.nombre}/>
-                <InfoField label="Edad" value={historiaClinica?.edad}/>
-                <InfoField label="DNI" value={historiaClinica?.dni}/>
-                <InfoField label="Sexo" value={historiaClinica?.sexo}/>
-                <InfoField label="Estado civil" value={historiaClinica?.estado_civil}/>
-                <InfoField label="Lugar de nacimiento" value={historiaClinica?.l_nacimiento}/>
-                <InfoField label="Ligar de residencia" value={historiaClinica?.l_residencia}/>
-                <InfoField label="Ocupacion" value={historiaClinica?.ocupacion}/>
-            </View>
-
-            {/* Motivo de consulta */}
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>Motivo de consulta</Text>
-                <InfoField value={historiaClinica?.motivo_consulta}/>
-            </View>
-
-            {/* Linea de tiempo */}
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>Linea de tiempo</Text>
-                {listaItems.length === 0 ? (
-                    <Text style={{ color: "#777", marginTop: 10 }}>No hay eventos agregados.</Text>
-                    ) : (
-                    listaItems.map((item) => (
-                        <View key={item.id} style={styles.itemCard}>
-                        <Text style={styles.itemFecha}>{item.fecha}</Text>
-                        <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
-                        </View>
-                    ))
-                )}
-            </View>
-
-            {/* Narracion */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Narracion</Text>
-              <InfoField value={historiaClinica?.narracion}/>
-            </View>
-
-            {/* Antecedentes de enfermedad actual */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Antecedentes de enfermedad actual</Text>
-              <InfoField value={historiaClinica?.antecedentes_enfermedad}/>
-            </View>
-
-            {/* Alergias */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Alergias</Text>
-              <InfoField value={historiaClinica?.alergias}/>
-            </View>
-
-            {/* Antecedentes personales */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Antecedentes personales</Text>
-              <InfoField label="Antecedentes fisiológicos" value={historiaClinica?.antecedentes_fisiologicos}/>
-              <InfoField label="Antecedentes patológicos" value={historiaClinica?.antecedentes_patologicos}/>
-              <InfoField label="Antecedentes quirúrgicos" value={historiaClinica?.antecedentes_quirurgicos}/>
-              <InfoField label="Antecedentes farmacológicos" value={historiaClinica?.antecedentes_farmacologicos}/>
-            </View>
-
-            {/* Antecedentes familiares */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Antecedentes familiares</Text>
-
-              {/* Padres */}
-
-              <InfoField label="Madre vive" value={capitalizar(historiaClinica?.madre_vive)}/>
-              {historiaClinica?.madre_vive === "no" && (
-                <InfoField label="Causa de fallecimiento" value={historiaClinica?.madre_causa_fallecimiento}/>
-              )}
-              <InfoField label="Enfermedad (madre)" value={historiaClinica?.madre_enfermedad}/>
-
-              <InfoField label="Padre vive" value={capitalizar(historiaClinica?.padre_vive)}/>
-              {historiaClinica?.padre_vive === "no" && (
-                <InfoField label="Causa de fallecimiento" value={historiaClinica?.padre_causa_fallecimiento}/>
-              )}
-              <InfoField label="Enfermedad (padre)" value={historiaClinica?.padre_enfermedad}/>
-
-              {/* Hijos */}
-
-              {listaHijos.length > 0 ? (
-                listaHijos.map((hijo, i) => (
-                  <InfoField key={`hijo_${i}`} label={`Hijo ${i+1}`} value={hijo.nota}/>
-                ))
-              ) : (
-                <Text style={styles.infoText}>Sin hijos registrados</Text>
-              )}
-
-              {/* Hermanos */}
-
-              {listaHermanos.length > 0 ? (
-                listaHermanos.map((hermano, i) => (
-                  <InfoField key={`hermano_${i}`} label={`Hermano ${i+1}`} value={hermano.nota}/>
-                ))
-              ) : (
-                <Text style={styles.infoText}>Sin hermanos registrados</Text>
-              )}
-              
-            </View>
-
-            {/* Habitos */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Hábitos</Text>
-
-              {(
-                historiaClinica?.h_alimentacion ||
-                historiaClinica?.h_diuresis ||
-                historiaClinica?.h_catarsis ||
-                historiaClinica?.h_sueño ||
-                historiaClinica?.h_alcohol_tabaco ||
-                historiaClinica?.h_infusiones ||
-                historiaClinica?.h_farmacos
-              ) ? (
-                <>
-                  <InfoField label="Hábitos de alimentación" value={historiaClinica?.h_alimentacion} />
-                  <InfoField label="Hábitos de diuresis" value={historiaClinica?.h_diuresis} />
-                  <InfoField label="Hábitos de catarsis" value={historiaClinica?.h_catarsis} />
-                  <InfoField label="Hábitos de sueño" value={historiaClinica?.h_sueño} />
-                  <InfoField label="Hábitos de alcohol / tabaco" value={historiaClinica?.h_alcohol_tabaco} />
-                  <InfoField label="Hábitos de infusiones" value={historiaClinica?.h_infusiones} />
-                  <InfoField label="Hábitos de fármacos" value={historiaClinica?.h_farmacos} />
-                </>
-              ) : (
-                <Text style={styles.infoText}>No se registró nungún hábito del paciente.</Text>
-              )}
-            </View>
-
-            {/* Caracteristicas socioeconomicas */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Características socioeconómicas</Text>
-
-              {(
-                historiaClinica?.obra_social ||
-                historiaClinica?.material_casa ||
-                historiaClinica?.electricidad ||
-                historiaClinica?.agua ||
-                historiaClinica?.toilet_privado ||
-                historiaClinica?.calefaccion ||
-                historiaClinica?.mascotas ||
-                historiaClinica?.otro
-              ) ? (
-                <>
-                  <InfoField label="Obra social" value={historiaClinica?.obra_social} />
-                  <InfoField label="Material de la casa" value={historiaClinica?.material_casa} />
-                  <InfoField label="Electricidad" value={capitalizar(historiaClinica?.electricidad)} />
-                  <InfoField label="Agua corriente" value={capitalizar(historiaClinica?.agua)} />
-                  <InfoField label="Baño privado" value={capitalizar(historiaClinica?.toilet_privado)} />
-                  <InfoField label="Calefacción" value={historiaClinica?.calefaccion} />
-                  <InfoField label="Mascotas" value={historiaClinica?.mascotas} />
-                  <InfoField label="Otro" value={historiaClinica?.otro} />
-                </>
-              ) : (
-                <Text style={styles.infoText}>No se registró nunguna caracteristica socioeconomica.</Text>
-              )}
-            </View>
-
-            <View style={styles.buttonContainerRight}>
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: "#881f1fff", width: 150 }]}
-                onPress={() => {
-                  Alert.alert(
-                    "Confirmar",
-                    "¿Seguro que quieres guardar esta historia?",
-                    [
-                      { text: "No", style: "cancel" },
-                      { text: "Sí", onPress: () => eliminarHistoriaClinicaView() }
-                    ]
-                  );
+        <View style={{ flex: 1 }}>
+          {/* Paginación arriba */}
+          <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 10 }}>
+            {secciones.map((_, index) => (
+              <View
+                key={`dot_${index}`}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  marginHorizontal: 5,
+                  backgroundColor: index === activeIndex ? Colors.primary : "#ccc",
                 }}
-              >
-                <Text style={[styles.actionButtonText, { color: "white" }]}>
-                  Eliminar
-                </Text>
-              </TouchableOpacity>
-            </View>
+              />
+            ))}
+          </View>
 
-        </ScrollView>
-    );
+          {/* FlatList horizontal */}
+          <FlatList
+            ref={flatListRef}
+            data={secciones}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(_, index) => index.toString()}
+            renderItem={({ item }) => item}
+            onScroll={onScroll}
+            scrollEventThrottle={16} // para actualizar smooth el activeIndex
+          />
+  </View>
+  );
 }
 
 
@@ -348,7 +399,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 14,
     color: "#444",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   container: {
     flex: 1,
