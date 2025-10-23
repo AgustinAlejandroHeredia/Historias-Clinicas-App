@@ -110,6 +110,15 @@ export default function ViewScreen() {
         }
     }
 
+    // simplemente hace que la primera letra sea mayuscula para los resultados de las elecciones binarias
+    const capitalizar = (texto?: string | null) => {
+      if (!texto || texto.trim() === "") return ""
+      const lower = texto.toLowerCase()
+      if (lower === "si") return "Si"
+      if (lower === "no") return "No"
+      return texto
+    };
+
 
 
 
@@ -185,13 +194,13 @@ export default function ViewScreen() {
 
               {/* Padres */}
 
-              <InfoField label="Madre vive" value={historiaClinica?.madre_vive}/>
+              <InfoField label="Madre vive" value={capitalizar(historiaClinica?.madre_vive)}/>
               {historiaClinica?.madre_vive === "no" && (
                 <InfoField label="Causa de fallecimiento" value={historiaClinica?.madre_causa_fallecimiento}/>
               )}
               <InfoField label="Enfermedad (madre)" value={historiaClinica?.madre_enfermedad}/>
 
-              <InfoField label="Padre vive" value={historiaClinica?.padre_vive}/>
+              <InfoField label="Padre vive" value={capitalizar(historiaClinica?.padre_vive)}/>
               {historiaClinica?.padre_vive === "no" && (
                 <InfoField label="Causa de fallecimiento" value={historiaClinica?.padre_causa_fallecimiento}/>
               )}
@@ -201,7 +210,7 @@ export default function ViewScreen() {
 
               {listaHijos.length > 0 ? (
                 listaHijos.map((hijo, i) => (
-                  <InfoField key={`hijo_${i}`} label={`Hijo ${i}`} value={hijo.nota}/>
+                  <InfoField key={`hijo_${i}`} label={`Hijo ${i+1}`} value={hijo.nota}/>
                 ))
               ) : (
                 <Text style={styles.infoText}>Sin hijos registrados</Text>
@@ -211,7 +220,7 @@ export default function ViewScreen() {
 
               {listaHermanos.length > 0 ? (
                 listaHermanos.map((hermano, i) => (
-                  <InfoField key={`hijo_${i}`} label={`Hijo ${i}`} value={hermano.nota}/>
+                  <InfoField key={`hermano_${i}`} label={`Hermano ${i+1}`} value={hermano.nota}/>
                 ))
               ) : (
                 <Text style={styles.infoText}>Sin hermanos registrados</Text>
@@ -263,9 +272,9 @@ export default function ViewScreen() {
                 <>
                   <InfoField label="Obra social" value={historiaClinica?.obra_social} />
                   <InfoField label="Material de la casa" value={historiaClinica?.material_casa} />
-                  <InfoField label="Electricidad" value={historiaClinica?.electricidad} />
-                  <InfoField label="Agua corriente" value={historiaClinica?.agua} />
-                  <InfoField label="Baño privado" value={historiaClinica?.toilet_privado} />
+                  <InfoField label="Electricidad" value={capitalizar(historiaClinica?.electricidad)} />
+                  <InfoField label="Agua corriente" value={capitalizar(historiaClinica?.agua)} />
+                  <InfoField label="Baño privado" value={capitalizar(historiaClinica?.toilet_privado)} />
                   <InfoField label="Calefacción" value={historiaClinica?.calefaccion} />
                   <InfoField label="Mascotas" value={historiaClinica?.mascotas} />
                   <InfoField label="Otro" value={historiaClinica?.otro} />
