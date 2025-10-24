@@ -1,4 +1,5 @@
 import InfoField from "@/components/InfoField";
+import PaginationDots from "@/components/PaginationDots";
 import { eliminarHistoriaClinica, obtenerHistoriaClinicaCompletaPorId } from "@/db/historia_clinica_service";
 import { obtenerItemsPorHistoriaId } from "@/db/linea_tiempo_item_service";
 import { obtenerParientesPorHistoria } from "@/db/pariente_service";
@@ -6,9 +7,10 @@ import { HistoriaClinicaComunModel, HistoriaClinicaComunResult } from "@/models/
 import { ItemListaResult, ItemModel } from "@/models/lt_item_model";
 import { ParienteListaResult, ParienteModel } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Dimensions, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ViewScreen() {
 
@@ -71,15 +73,10 @@ export default function ViewScreen() {
           throw new Error("create: Error obteniendo parientes ❌")
         }
 
-        console.log("Datos crudos:", response.data)
-
         const parientes: ParienteModel[] = response.data as ParienteModel[] || []
 
         const hijos = parientes.filter(p => p.tipo === "hijo")
         const hermanos = parientes.filter(p => p.tipo === "hermano")
-
-        console.log("Hijos:", hijos)
-        console.log("Hermanos:", hermanos)
 
         setListaHijos(hijos)
         setListaHermanos(hermanos)
@@ -326,22 +323,19 @@ export default function ViewScreen() {
 
 
     return (
-        <View style={{ flex: 1 }}>
-          {/* Paginación arriba */}
-          <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 10 }}>
-            {secciones.map((_, index) => (
-              <View
-                key={`dot_${index}`}
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  marginHorizontal: 5,
-                  backgroundColor: index === activeIndex ? Colors.primary : "#ccc",
-                }}
-              />
-            ))}
-          </View>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={['left', 'right', 'bottom']}>
+        <Stack.Screen
+          options={{
+            title: "Ver Historia Clínica",
+            headerBackVisible: false,
+            headerShown: true,
+          }}
+        />
+
+        <View style={{ flex: 1, justifyContent: "flex-start" }}>
+
+          {/* Componente de puntos de paginacion */}
+          <PaginationDots secciones={secciones} activeIndex={activeIndex}/>
 
           {/* FlatList horizontal */}
           <FlatList
@@ -355,7 +349,8 @@ export default function ViewScreen() {
             onScroll={onScroll}
             scrollEventThrottle={16} // para actualizar smooth el activeIndex
           />
-  </View>
+        </View>
+      </SafeAreaView>     
   );
 }
 

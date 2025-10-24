@@ -2,6 +2,7 @@ import { BinaryChoice } from "@/components/BinaryChoice";
 import { CustomInput } from "@/components/CustomInput";
 import { DateInput } from "@/components/DateInput";
 import { NumberPicker } from "@/components/NumberPicker";
+import PaginationDots from "@/components/PaginationDots";
 import { agregarHistoriaClinica, eliminarHistoriaClinica } from "@/db/historia_clinica_service";
 import { agregarLineaTiempoItem, eliminarItemPorId } from "@/db/linea_tiempo_item_service";
 import { agregarPariente, eliminarParientePorId } from "@/db/pariente_service";
@@ -11,7 +12,7 @@ import { ParienteModel, ParienteResult } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
 import { Stack, useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
-import { Alert, Dimensions, FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -408,7 +409,6 @@ export default function CreateScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
         {/* Datos personales */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Datos del Paciente</Text>
@@ -475,7 +475,6 @@ export default function CreateScreen() {
               onChangeText={(text) => handleChange("motivo_consulta", text)}
           />
         </View>
-        </ScrollView>
       </KeyboardAwareScrollView>,
 
       <KeyboardAwareScrollView
@@ -487,7 +486,6 @@ export default function CreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
           {/* Linea de tiempo */}
           <View style={styles.card}>
             <View style={styles.itemHeader}>
@@ -557,7 +555,6 @@ export default function CreateScreen() {
                 onChangeText={(text) => handleChange("narracion", text)}
             />
           </View>
-        </ScrollView>
       </KeyboardAwareScrollView>,
 
       <KeyboardAwareScrollView
@@ -569,7 +566,6 @@ export default function CreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
           {/* Antecedentes de enfermedad actual */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Antecedentes de enfermedad</Text>
@@ -630,7 +626,6 @@ export default function CreateScreen() {
                 onChangeText={(text) => handleChange("antecedentes_farmacologicos", text)}
             />
           </View>
-        </ScrollView>
       </KeyboardAwareScrollView>,
 
       <KeyboardAwareScrollView
@@ -642,7 +637,6 @@ export default function CreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
           {/* Antecedentes familiares */}
 
           {/* Padres */}
@@ -734,7 +728,6 @@ export default function CreateScreen() {
             ))}
 
           </View>
-        </ScrollView>
       </KeyboardAwareScrollView>,
 
       <KeyboardAwareScrollView
@@ -746,7 +739,6 @@ export default function CreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
           {/* Habitos */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Hábitos</Text>
@@ -807,7 +799,6 @@ export default function CreateScreen() {
                 onChangeText={(text) => handleChange("h_farmacos", text)}
             />
           </View>
-        </ScrollView>
       </KeyboardAwareScrollView>,
 
       <KeyboardAwareScrollView
@@ -819,7 +810,6 @@ export default function CreateScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
           {/* Caracteristicas socioeconomicas */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Características socioeconómicas</Text>
@@ -926,10 +916,7 @@ export default function CreateScreen() {
               <Text style={[styles.actionButtonText, { color: "white" }]}>Aceptar</Text>
             </TouchableOpacity>
           </View>
-        
-        </ScrollView>
       </KeyboardAwareScrollView>
-
   ]
 
 
@@ -937,32 +924,19 @@ export default function CreateScreen() {
   // VISTA
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} >
-        <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={['left', 'right', 'bottom']}>
         <Stack.Screen
             options={{
               title: "Crear Historia Clínica",
-              headerBackVisible: false, // elimino la flecha de retroceso para evitar errores del user y mantener consistencia visual
+              headerBackVisible: false, // se elimina la flecha de retroceso
               headerShown: true,
             }}
-          />
+        />
 
         <View style={{ flex: 1 }}>
-          {/* Paginación arriba */}
-          <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 10 }}>
-            {secciones.map((_, index) => (
-              <View
-                key={`dot_${index}`}
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  marginHorizontal: 5,
-                  backgroundColor: index === activeIndex ? Colors.primary : "#ccc",
-                }}
-              />
-            ))}
-          </View>
+          
+          {/* Componente de puntos de paginacion */}
+          <PaginationDots secciones={secciones} activeIndex={activeIndex}/>
 
           {/* FlatList horizontal */}
           <FlatList
@@ -977,7 +951,6 @@ export default function CreateScreen() {
             scrollEventThrottle={16} // para actualizar smooth el activeIndex
           />
         </View>
-        </>
     </SafeAreaView>
   );
 }
