@@ -1,15 +1,17 @@
+import BuscadorHistorias from "@/components/BuscadorHistorias";
 import { obtenerHistoriasClinicas } from "@/db/historia_clinica_service";
 import { HistoriaClinicaListadoModel } from "@/models/historia_clinica_model";
 import { Colors } from "@/theme/colors";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Index() {
 
   const router = useRouter()
 
   const [listadoHistorias, setListadoHistorias] = useState<HistoriaClinicaListadoModel[]>([])
+  const [historiasFiltradas, setHistoriasFiltradas] = useState<HistoriaClinicaListadoModel[]>([])
   const [busqueda, setBusqueda] = useState('');
   const [isNavigating, setIsNavigating] = useState(false)
 
@@ -20,8 +22,6 @@ export default function Index() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        //await resetDatabase() // debug only
-        //await initDatabases() // paso al _layout.tsx
         await cargarListado()
       }catch (error) {
         console.error("index : Error inicializando las tablas ❌: ", error)
@@ -49,7 +49,7 @@ export default function Index() {
     }, [])
   );
 
-  const cargarListado = async (): Promise<void> => {
+  const cargarListado_old = async (): Promise<void> => {
     try {
 
       const respuesta = await obtenerHistoriasClinicas();
@@ -60,6 +60,23 @@ export default function Index() {
         console.error("index : ❌ respuesta invalida al cargar listado.")
       }
 
+    } catch (error) {
+      console.error("index : ❌ Error al cargar listado de historias clinicas.")
+    }
+  }
+
+  const cargarListado = async (): Promise<void> => {
+    try {
+      const respuesta = await obtenerHistoriasClinicas()
+      if (respuesta.success && respuesta.data) {
+        const ordenadas = respuesta.data
+          .filter((h) => !!h.fecha_creacion)
+          .sort((a, b) => (b.fecha_creacion ?? '').localeCompare(a.fecha_creacion ?? ''))
+        setListadoHistorias(ordenadas)
+        setHistoriasFiltradas(ordenadas)
+      } else {
+        console.error("index : ❌ respuesta invalida al cargar listado.")
+      }
     } catch (error) {
       console.error("index : ❌ Error al cargar listado de historias clinicas.")
     }
@@ -82,22 +99,16 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-
       <View style={styles.row}>
         <TouchableOpacity disabled={isNavigating} style={styles.botonNueva} onPress={handleNueva}>
           <Text style={styles.botonText}>+ Nueva</Text>
         </TouchableOpacity>
 
-        <TextInput
-          style={styles.busqueda}
-          placeholder="Buscar..."
-          value={busqueda}
-          onChangeText={setBusqueda}
-        />
+        <BuscadorHistorias historias={listadoHistorias} onFiltrar={setHistoriasFiltradas} />
       </View>
 
       <FlatList
-        data={listadoHistorias}
+        data={historiasFiltradas}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => seleccionDeHistoria(item.id)}>
