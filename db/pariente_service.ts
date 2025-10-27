@@ -117,3 +117,46 @@ export const eliminarParientePorId = async (
         }
     }
 }
+
+export const actualizarPariente = async (
+    id: number,
+    parienteData: Omit<ParienteModel, 'id' | 'historia_clinica_comun_id' | 'tipo'>
+) : Promise<ParienteResult> => {
+    try {
+
+        const db = await openDatabase()
+
+        const result = await db.runAsync(
+            `
+            UPDATE pariente
+            SET
+                nota = ?
+            WHERE id = ?
+            `,
+            [
+                parienteData.nota
+            ]
+        )
+
+        if(result.changes === 0){
+            return {
+                success: false,
+                error: 'No se encontro el partiente a actualizar.'
+            }
+        }
+
+        console.log('Pariente actualizado con ID: ', id, '✅')
+        return {
+            success: true,
+            changes: result.changes,
+            message: 'Pariente actualizado correctamente'
+        }
+
+    } catch (error) {
+        console.error('Error al actualizar el pariente con ID ', id, '❌: ', error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Error desconocido'
+        }
+    }
+}

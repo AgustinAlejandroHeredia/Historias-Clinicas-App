@@ -1,8 +1,9 @@
 import { resetDatabase } from "@/db/database";
 import { initDatabases } from "@/db/init_databases";
-import { Stack } from "expo-router";
+import Octicons from '@expo/vector-icons/Octicons';
+import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, TouchableOpacity, View } from "react-native";
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
@@ -41,11 +42,78 @@ export default function RootLayout() {
     );
   }
 
+  const router = useRouter()
+
+  const abrirOpciones = () => {
+    router.push("/options")
+  }
+
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: "Home", headerLeft: () => null }} />
-      <Stack.Screen name="create" options={{ title: "Nueva Historia Clínica", headerLeft: () => null }} />
-      <Stack.Screen name="view" options={{ title: "Ver Historia Clínica", headerBackVisible: false, }} />
+
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          title: "Home", 
+          headerLeft: () => null ,
+          headerRight: () => (
+            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+              {/*<Ionicons name="ellipsis-vertical" size={24} color="black" />*/}
+              <Octicons name="gear" size={20} color="black" />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
+
+      <Stack.Screen 
+        name="create" 
+        options={{ 
+          title: "Nueva Historia Clínica", 
+          headerLeft: () => null,
+          headerRight: () => (
+            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+              {/*<Ionicons name="ellipsis-vertical" size={24} color="black" />*/}
+              <Octicons name="gear" size={20} color="black" />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
+      
+      <Stack.Screen 
+        name="view" 
+        options={{ 
+          title: "Ver Historia Clínica", 
+          headerLeft: () => null, 
+          headerRight: () => (
+            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+              {/*<Ionicons name="ellipsis-vertical" size={20} color="black" />*/}
+              <Octicons name="gear" size={20} color="black" />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
+
+      <Stack.Screen 
+        name="edit" 
+        options={{ 
+          title: "Editar historia clinica", 
+          headerLeft: () => null ,
+          headerRight: () => (
+            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+              {/*<Ionicons name="ellipsis-vertical" size={24} color="black" />*/}
+              <Octicons name="gear" size={20} color="black" />
+            </TouchableOpacity>
+          ),
+        }} 
+      />
+
+      <Stack.Screen 
+        name="options" 
+        options={{ 
+          title: "Opciones", 
+          headerLeft: () => null
+        }} 
+      />
     </Stack>
   );
 }

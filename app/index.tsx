@@ -6,6 +6,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+//import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+
 export default function Index() {
 
   const router = useRouter()
@@ -47,23 +50,7 @@ export default function Index() {
         isActive = false;
       };
     }, [])
-  );
-
-  const cargarListado_old = async (): Promise<void> => {
-    try {
-
-      const respuesta = await obtenerHistoriasClinicas();
-      if(respuesta.success && respuesta.data){
-        setListadoHistorias(respuesta.data)
-        console.log("index : ✅ historias cargadas con exito.")
-      }else{
-        console.error("index : ❌ respuesta invalida al cargar listado.")
-      }
-
-    } catch (error) {
-      console.error("index : ❌ Error al cargar listado de historias clinicas.")
-    }
-  }
+  )
 
   const cargarListado = async (): Promise<void> => {
     try {
@@ -86,10 +73,15 @@ export default function Index() {
     router.push({ pathname: "/view", params: { id: id.toString() } })
   }
 
+  const editarHistoria = (id: number, edit: string) => {
+    router.push({ pathname: "/create", params: { id: id.toString(), edit: edit } })
+  }
+
   const handleNueva = () => {
     if(isNavigating) return
     setIsNavigating(true)
-    router.push("/create")
+    router.push({ pathname: "/create", params: { id: -1, edit: "false" } })
+    //router.push("/create")
     setTimeout(() => setIsNavigating(false), 1000);
   };
 
@@ -117,6 +109,13 @@ export default function Index() {
               <Text style={styles.nombre}>{item.nombre}</Text>
             </View>
             <Text style={styles.descripcion}>{item.motivo_consulta}</Text>
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4 }}>
+              <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ paddingBottom: 9 }}>
+                <FontAwesome name="pencil-square-o" size={18} color={Colors.primary} />
+              </TouchableOpacity>
+            </View>
+
           </TouchableOpacity>
         )}
         ListEmptyComponent={() => (
@@ -202,6 +201,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   descripcion: {
+    marginTop: 4,
     color: '#555',
   },
 });

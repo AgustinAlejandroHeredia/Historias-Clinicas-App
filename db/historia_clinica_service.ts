@@ -315,3 +315,121 @@ export const eliminarHistoriaClinica = async (id:number): Promise<HistoriaClinic
         }
     }
 }
+
+export const actualizarHistoriaClinica = async (
+  id: number,
+  historiaData: Omit<HistoriaClinicaComunModel, 'id' | 'fecha_creacion'>
+): Promise<HistoriaClinicaComunResult> => {
+  try {
+    const db = await openDatabase();
+
+    const result = await db.runAsync(
+      `
+      UPDATE historia_clinica_comun
+      SET
+        nombre = ?,
+        dni = ?,
+        edad = ?,
+        sexo = ?,
+        estado_civil = ?,
+        l_nacimiento = ?,
+        l_residencia = ?,
+        ocupacion = ?,
+        motivo_consulta = ?,
+        narracion = ?,
+        antecedentes_enfermedad = ?,
+        alergias = ?,
+        antecedentes_fisiologicos = ?,
+        antecedentes_patologicos = ?,
+        antecedentes_quirurgicos = ?,
+        antecedentes_farmacologicos = ?,
+        madre_vive = ?,
+        madre_causa_fallecimiento = ?,
+        madre_enfermedad = ?,
+        padre_vive = ?,
+        padre_causa_fallecimiento = ?,
+        padre_enfermedad = ?,
+        hijos = ?,
+        hermanos = ?,
+        h_alimentacion = ?,
+        h_diuresis = ?,
+        h_catarsis = ?,
+        h_sueño = ?,
+        h_alcohol_tabaco = ?,
+        h_infusiones = ?,
+        h_farmacos = ?,
+        obra_social = ?,
+        material_casa = ?,
+        electricidad = ?,
+        agua = ?,
+        toilet_privado = ?,
+        calefaccion = ?,
+        mascotas = ?,
+        otro = ?
+      WHERE id = ?
+      `,
+      [
+        historiaData.nombre,
+        historiaData.dni || null,
+        historiaData.edad,
+        historiaData.sexo,
+        historiaData.estado_civil || null,
+        historiaData.l_nacimiento,
+        historiaData.l_residencia,
+        historiaData.ocupacion,
+        historiaData.motivo_consulta,
+        historiaData.narracion,
+        historiaData.antecedentes_enfermedad,
+        historiaData.alergias,
+        historiaData.antecedentes_fisiologicos,
+        historiaData.antecedentes_patologicos,
+        historiaData.antecedentes_quirurgicos,
+        historiaData.antecedentes_farmacologicos,
+        historiaData.madre_vive || null,
+        historiaData.madre_causa_fallecimiento || null,
+        historiaData.madre_enfermedad || null,
+        historiaData.padre_vive || null,
+        historiaData.padre_causa_fallecimiento || null,
+        historiaData.padre_enfermedad || null,
+        historiaData.hijos,
+        historiaData.hermanos,
+        historiaData.h_alimentacion || null,
+        historiaData.h_diuresis || null,
+        historiaData.h_catarsis || null,
+        historiaData.h_sueño || null,
+        historiaData.h_alcohol_tabaco || null,
+        historiaData.h_infusiones || null,
+        historiaData.h_farmacos || null,
+        historiaData.obra_social || null,
+        historiaData.material_casa || null,
+        historiaData.electricidad || null,
+        historiaData.agua || null,
+        historiaData.toilet_privado || null,
+        historiaData.calefaccion || null,
+        historiaData.mascotas || null,
+        historiaData.otro || null,
+        id
+      ]
+    );
+
+    if (result.changes === 0) {
+      return {
+        success: false,
+        error: 'No se encontró la historia clínica a actualizar.'
+      };
+    }
+
+    console.log('Historia clínica actualizada con ID: ', id, '✅');
+    return {
+      success: true,
+      changes: result.changes,
+      message: 'Historia clínica actualizada correctamente.'
+    };
+  } catch (error) {
+    console.error('Error al actualizar la historia clínica con ID', id, '❌: ', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    };
+  }
+};

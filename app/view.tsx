@@ -297,7 +297,7 @@ export default function ViewScreen() {
 
               <View style={styles.buttonContainerRight}>
                 <TouchableOpacity
-                  style={[styles.actionButton, { backgroundColor: "#881f1fff", width: 150 }]}
+                  style={[styles.actionButton, { backgroundColor: Colors.eliminate, width: 150 }]}
                   onPress={() => {
                     Alert.alert(
                       "Confirmar",

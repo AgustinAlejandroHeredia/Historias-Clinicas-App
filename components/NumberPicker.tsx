@@ -1,6 +1,6 @@
 import { Colors } from "@/theme/colors";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface NumberPickerProps {
   value: number | null;
@@ -25,23 +25,25 @@ export const NumberPicker: React.FC<NumberPickerProps> = ({ value, onChange, max
       </TouchableOpacity>
 
       {open && (
-        <ScrollView style={styles.dropdown}>
-          {numbers.map((num) => (
-            <TouchableOpacity
-              key={num}
-              style={[
-                styles.numberItem,
-                num === value && { backgroundColor: Colors.primary }
-              ]}
-              onPress={() => {
-                onChange(num);
-                setOpen(false);
-              }}
-            >
-              <Text style={[styles.numberText, num === value && { color: "white" }]}>{num}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <View style={styles.dropdown}>
+          <FlatList
+            data={numbers}
+            keyExtractor={(item) => item.toString()}
+            style={{ maxHeight: 200 }}
+            nestedScrollEnabled // importante para scroll dentro de otro scroll
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.numberItem, item === value && { backgroundColor: Colors.primary }]}
+                onPress={() => {
+                  onChange(item);
+                  setOpen(false);
+                }}
+              >
+                <Text style={[styles.numberText, item === value && { color: "white" }]}>{item}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
       )}
     </View>
   );

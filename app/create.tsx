@@ -3,22 +3,113 @@ import { CustomInput } from "@/components/CustomInput";
 import { DateInput } from "@/components/DateInput";
 import { NumberPicker } from "@/components/NumberPicker";
 import PaginationDots from "@/components/PaginationDots";
-import { agregarHistoriaClinica, eliminarHistoriaClinica } from "@/db/historia_clinica_service";
-import { agregarLineaTiempoItem, eliminarItemPorId } from "@/db/linea_tiempo_item_service";
-import { agregarPariente, eliminarParientePorId } from "@/db/pariente_service";
+import { actualizarHistoriaClinica, agregarHistoriaClinica, eliminarHistoriaClinica, obtenerHistoriaClinicaCompletaPorId } from "@/db/historia_clinica_service";
+import { agregarLineaTiempoItem, eliminarItemPorId, obtenerItemsPorHistoriaId } from "@/db/linea_tiempo_item_service";
+import { actualizarPariente, agregarPariente, eliminarParientePorId, obtenerParientesPorHistoria } from "@/db/pariente_service";
 import { HistoriaClinicaComunModel, HistoriaClinicaComunResult } from "@/models/historia_clinica_model";
-import { ItemModel, ItemResult } from "@/models/lt_item_model";
-import { ParienteModel, ParienteResult } from "@/models/pariente_model";
+import { ItemListaResult, ItemModel, ItemResult } from "@/models/lt_item_model";
+import { ParienteListaResult, ParienteModel, ParienteResult } from "@/models/pariente_model";
 import { Colors } from "@/theme/colors";
-import { Stack, useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from "react-native-safe-area-context";
 
+/*
+  - Nueva directriz de uso de ids temporales :
+  Cuando el usuario crea un item, lo que hace es partir de -1 y la id temporal va decrementando para que nunca se pueda
+  pisar con una id de la db real, por lo que al inicio no es necesario recalcularla, solo comienza desde -1.
+  Cuando el usuario elimina un item, si la id es NEGATIVA quiere decir que no debe agregarse a la lista de listaItemsIdsEliminadas
+  porque no tiene correspondencia en la DB, solo se borra de las listas (listaItemsEdit y listaItems) con esa id negativa.
+
+  - Manejo de eliminacion de items :
+  Usar una lista nueva para los elementos que el usuario cree en la pantalla de editar (listaItemsEdit), 
+  entonces si el usuario eliminar item, si la ID es negativa, solo se borra de las listas listaItemsEdit y listaItems, si es
+  positiva se agrega a la lista listaItemsIdsEliminadas para que sean borrados luego.
+
+  La idea es manejar la eliminacion en base a si tiene correspondecia en la DB (negativa o no) manteniendo la coherencia en las
+  3 listas:
+
+    - listaItems : la lista que se completa al traer los datos de la DB y la que se MUESTRA EN PANTALLA
+    - listaItemsEdit : SOLO los nuevos items que agrega el usuario (se duplican en ambas listas)
+    - listaItemsIdsEliminadas : lista de IDs para que al guardar todos los cambios, se eliminen de la DB (checkear si la id
+    que se encuentra en esa lista es positiva en caso de que haya un error logico, para evitar un error con operaciones de la
+    DB)
+
+
+  Logica de modulos
+
+    - Obtener items de DB : cuando trae la lista de items que corresponden con la historia, inicializa el numero como la longitud
+    de la lista *-1 para hacerla negativa y utilizar indices temporales
+
+    - Agregar item : se guarda en listaItems, si edit=="true" tambien lo guarda en listaItemsEdit. itemIdAux se decrementa
+    en 1 (itemIdAux - 1).
+
+    - Eliminar item : si la ID que le llega es POSITIVA, guarda la id en listaItemsIdsEliminadas para eliminar mas tarde de
+    la DB, si la ID es NEGATIVA solo lo borra de listaItems y listaItemsEdit.
+
+
+
+
+    FALTA AGREGAR UNA LOGICA MUY SIMILAR PARA PARIENTES (HIJOS Y HERMANOS)
+
+*/
+
+
 export default function CreateScreen() {
   
   const router = useRouter()
+
+  
+  // ----- OBTENCION DE DATOS ENVIADOS -----
+  const { id, edit } = useLocalSearchParams<{ id?: string; edit?: string }>();
+  const idNum = Number(id)
+
+
+  // ----- CONFIGUTA EL MODULO PARA CREATE O EDIT -----
+  useEffect(() => {
+    const cargarEdicion = async () => {
+      if (edit === "true") {
+        try {
+          await obtenerDatos(); // obtiene historia, items y parientes
+          console.log("Datos de edición obtenidos ✅");
+        } catch (error) {
+          console.error("Error al obtener datos de edición ❌", error);
+        }
+      }
+    };
+    cargarEdicion();
+  }, [edit])
+
+
+
+
+
+  // ----- VARIABLES PARA CREATE Y EDIT
+  const [listaItems, setListaItems] = useState<ItemModel[]>([])
+  const [listaItemsEdit, setListaItemsEdit] = useState<ItemModel[]>([])
+  const [modalVisible, setModalVisible] = useState(false)
+  const [nuevoItem, setNuevoItem] = useState({fecha: "", descripcion: ""})
+  const [itemIdAux, setItemIdAux] = useState<number>(-1)
+
+  // create
+  const [listaHijos, setListaHijos] = useState<ParienteModel[]>([])
+  const [cantHijos, setCantHijos] = useState<number>(0)
+
+  // edit, guarda el listado original de la db que tiene
+  const [listaHijosEdit_DB, setListaHijosEdit_DB] = useState<ParienteModel[]>([])
+
+  // create
+  const [listaHermanos, setListaHermanos] = useState<ParienteModel[]>([])
+  const [cantHermanos, setCantHermanos] = useState<number>(0)
+
+  // edit, guarda el listado original de la db que tiene
+  const [listaHermanosEdit_DB, setListaHermanosEdit_DB] = useState<ParienteModel[]>([])
+
+  // se crea una lista que guarda los id de los items eliminados para que si el user presiona cancelar se restauren (del. temporal)
+  const [listaItemsIdsEliminadas, setListaItemsIdsEliminadas] = useState<number[]>([])
 
   const [formData, setFormData] = useState({
 
@@ -113,45 +204,315 @@ export default function CreateScreen() {
     "hermanos",
   ];
 
-  const [listaItems, setListaItems] = useState<ItemModel[]>([])
-  const [modalVisible, setModalVisible] = useState(false)
-  const [nuevoItem, setNuevoItem] = useState({fecha: "", descripcion: ""})
-  const [itemIdAux, setItemIdAux] = useState<number>(0)
-
-  const [listaHijos, setListaHijos] = useState<ParienteModel[]>([])
-  const [cantHijos, setCantHijos] = useState<number>(0)
-
-  const [listaHermanos, setListaHermanos] = useState<ParienteModel[]>([])
-  const [cantHermanos, setCantHermanos] = useState<number>(0)
 
 
 
-  // FUNCIONES
+
+  // ----- VARIABLES PARA EDICION -----
+  const [historiaClinica, setHistoriaClinica] = useState<HistoriaClinicaComunModel>()
+
+
+  // ----- FUNCIONES PARA EDICION -----
+  const obtenerDatosHistoria = async () => {
+      const response : HistoriaClinicaComunResult = await obtenerHistoriaClinicaCompletaPorId(idNum)
+      if(!response.success) {
+          throw new Error("create : Error obteniendo historia clinica ❌ ")
+      }
+      setHistoriaClinica(response.data as HistoriaClinicaComunModel)
+  }
+
+  const obtenerDatosItems = async () => {
+      const response : ItemListaResult = await obtenerItemsPorHistoriaId(idNum)
+      if(!response.success) {
+          throw new Error("create : Error obteniendo items ❌ ")
+      }
+      // ordena la lista por fechas
+      const itemsOrdenados = (response.data as ItemModel[]).sort((a, b) => {
+          const [diaA, mesA, anioA] = a.fecha.split("/").map(Number);
+          const [diaB, mesB, anioB] = b.fecha.split("/").map(Number);
+
+          const dateA = new Date(anioA, mesA - 1, diaA);
+          const dateB = new Date(anioB, mesB - 1, diaB);
+
+          return dateA.getTime() - dateB.getTime();
+      });
+      setListaItems(itemsOrdenados)
+  }
+
+  const obtenerDatosParientes = async () => {
+    try {
+      const response: ParienteListaResult = await obtenerParientesPorHistoria(idNum)
+
+      if (!response.success) {
+        throw new Error("create: Error obteniendo parientes ❌")
+      }
+
+      const parientes: ParienteModel[] = response.data as ParienteModel[] || []
+
+      const hijos = parientes.filter(p => p.tipo === "hijo")
+      const hermanos = parientes.filter(p => p.tipo === "hermano")
+
+      setListaHijos(hijos)
+      setListaHijosEdit_DB(hijos) // copia el listado original
+      setListaHermanos(hermanos)
+      setListaHermanosEdit_DB(hermanos) // copía el listado original
+    } catch (error) {
+      console.error("Error en obtenerDatosParientes:", error)
+    }
+  }
+
+  const obtenerDatos = async () => {
+    try {
+      await obtenerDatosHistoria()
+      await obtenerDatosItems()
+      await obtenerDatosParientes()
+      // actualiza el id auxiliar para la creacion de items y que no haya problema (indice negativo)
+      setItemIdAux((listaItems.length)*-1)
+      console.log(" create_editar : Datos cargados exitosamente ✅ ")
+    }catch (error) {
+      console.error(" create_editar : Error al obtener la informacion a presentar ❌: ", error)
+    }
+  }
+
+  const guardarDatosEditados = async () => {
+    try {
+
+      // crea el objeto apra el intercambio con la db (operacion PUT)
+      const historiaEditada : HistoriaClinicaComunModel = {
+        nombre: formData.nombre,
+        dni: formData.dni,
+        edad: formData.edad,
+        sexo: formData.sexo,
+        estado_civil: formData.estado_civil,
+        l_nacimiento: formData.l_nacimiento,
+        l_residencia: formData.l_residencia,
+        ocupacion: formData.ocupacion,
+        motivo_consulta: formData.motivo_consulta,
+        narracion: formData.narracion,
+        antecedentes_enfermedad: formData.antecedentes_enfermedad,
+        alergias: formData.alergias,
+        antecedentes_fisiologicos: formData.antecedentes_fisiologicos,
+        antecedentes_patologicos: formData.antecedentes_patologicos,
+        antecedentes_quirurgicos: formData.antecedentes_quirurgicos,
+        antecedentes_farmacologicos: formData.antecedentes_farmacologicos,
+        madre_vive: formData.madre_vive,
+        madre_causa_fallecimiento: formData.madre_causa_fallecimiento,
+        madre_enfermedad: formData.madre_enfermedad,
+        padre_vive: formData.padre_vive,
+        padre_causa_fallecimiento: formData.padre_causa_fallecimiento,
+        padre_enfermedad: formData.padre_enfermedad,
+        hijos: formData.hijos,
+        hermanos: formData.hermanos,
+        h_alimentacion: formData.h_alimentacion,
+        h_diuresis: formData.h_diuresis,
+        h_catarsis: formData.h_catarsis,
+        h_sueño: formData.h_sueño,
+        h_alcohol_tabaco: formData.h_alcohol_tabaco,
+        h_infusiones: formData.h_infusiones,
+        h_farmacos: formData.h_farmacos,
+        obra_social: formData.obra_social,
+        material_casa: formData.material_casa,
+        electricidad: formData.electricidad,
+        agua: formData.agua,
+        toilet_privado: formData.toilet_privado,
+        calefaccion: formData.calefaccion,
+        mascotas: formData.mascotas,
+        otro: formData.otro
+      }
+
+      // se guarda la historia
+      actualizarHistoriaClinica(idNum, historiaEditada)
+      console.log("create_edit : Historia guardada ✅")
+
+      // se guardan los cambios en parientes
+
+      // se hace un borrado definitivo de los items que se eliminaron (las ids que estan en listaItemsIdsEliminadas)
+      listaItemsIdsEliminadas.forEach((id) => {
+        eliminarItemPorId(id)
+        console.log("create_edit : Items esperando eliminacion eliminados ✅")
+      })
+
+      // deberia guardar los items que se hayan creado ahora
+      listaItemsEdit.forEach((item) => {
+
+        const itemNuevo : ItemModel = {
+          fecha: item.fecha,
+          descripcion: item.descripcion,
+          historia_clinica_comun_id: idNum
+        }
+
+        agregarLineaTiempoItem(itemNuevo)
+
+        console.log("create_edit : Items guardados ✅")
+
+      })
+
+      // maneja la informacion de hijos actualizada
+        
+      // borra
+      // si hay menos elementos ahora que antes, borra de la db los que no coincidan
+      if(listaHijos.length < listaHijosEdit_DB.length){
+        for(let i = listaHijos.length ; i < listaHijosEdit_DB.length ; i++){
+          await eliminarParientePorId(listaHijosEdit_DB[i].id!)
+        }
+        setListaHijosEdit_DB(listaHijosEdit_DB.slice(0, listaHijos.length))
+        console.log("create_edit : Se eliminaron hijos")
+      }else{
+        console.log("create_edit : No se eliminaron hijos")
+      }
+
+      // actualiza
+      // si la cantidad de elementos en listaHijosEdit_DB <= que listaHijos, debe actualizar los que coinciden
+      if(listaHijosEdit_DB.length > 0 && listaHijosEdit_DB.length <= listaHijos.length){
+        for(let i = 0 ; i<listaHijosEdit_DB.length ; i++){
+          await actualizarPariente(listaHijosEdit_DB[i].id!, listaHijos[i])
+        }
+        console.log("create_edit : Se actualizaron hijos")
+      }else{
+        console.log("create_edit : No se actualizaron hijos")
+      }
+
+      // agregar
+      // si listaHijos > listaHijosEdit_DB es que hay nuevos y debe almacenarlos en la DB
+      if(listaHijos.length > listaHijosEdit_DB.length){
+        for(let i = listaHijosEdit_DB.length; i < listaHijos.length; i++){
+          listaHijos[i].historia_clinica_comun_id = idNum
+          await agregarPariente(listaHijos[i])
+          console.log("create_edit : Se agregaro un hijo : ", listaHijos[i])
+        }
+      }else{
+        console.log("create_edit : No se agregaron hijos")
+      }
+
+      console.log("create_edit : Parientes guardados ✅")
+
+      console.log(" ---------- Todos los datos editados guardados con exito ✅ ---------- ")
+      retroceder()
+  
+    } catch (error) {
+      console.error("create_edit : Se produjo un error guardando los datos editandos ❌.")
+      retroceder()
+    }
+
+    // maneja la informacion de hermanos actualizada
+
+    // borra
+    // si hay menos elementos ahora que antes, borra de la db los que no coincidan
+    if (listaHermanos.length < listaHermanosEdit_DB.length) {
+      for (let i = listaHermanos.length; i < listaHermanosEdit_DB.length; i++) {
+        await eliminarParientePorId(listaHermanosEdit_DB[i].id!);
+      }
+      setListaHermanosEdit_DB(listaHermanosEdit_DB.slice(0, listaHermanos.length));
+      console.log("create_edit : Se eliminaron hermanos");
+    } else {
+      console.log("create_edit : No se eliminaron hermanos");
+    }
+
+    // actualiza
+    // si la cantidad de elementos en listaHermanosEdit_DB <= que listaHermanos, debe actualizar los que coinciden
+    if (listaHermanosEdit_DB.length > 0 && listaHermanosEdit_DB.length <= listaHermanos.length) {
+      for (let i = 0; i < listaHermanosEdit_DB.length; i++) {
+        await actualizarPariente(listaHermanosEdit_DB[i].id!, listaHermanos[i]);
+      }
+      console.log("create_edit : Se actualizaron hermanos");
+    } else {
+      console.log("create_edit : No se actualizaron hermanos");
+    }
+
+    // agregar
+    // si listaHermanos > listaHermanosEdit_DB es que hay nuevos y debe almacenarlos en la DB
+    if (listaHermanos.length > listaHermanosEdit_DB.length) {
+      for (let i = listaHermanosEdit_DB.length; i < listaHermanos.length; i++) {
+        listaHermanos[i].historia_clinica_comun_id = idNum;
+        await agregarPariente(listaHermanos[i]);
+        console.log("create_edit : Se agregaro un hermano : ", listaHermanos[i]);
+      }
+    } else {
+      console.log("create_edit : No se agregaron hermanos");
+    }
+  }
+
+  // useEffect que se activa cuando historiaClinica cambia
+  useEffect(() => {
+    if (historiaClinica) {
+      
+      setFormData({
+        nombre: historiaClinica.nombre || "",
+        dni: historiaClinica.dni || "",
+        edad: historiaClinica.edad || "",
+        sexo: historiaClinica.sexo || "",
+        estado_civil: historiaClinica.estado_civil || "",
+        l_nacimiento: historiaClinica.l_nacimiento || "",
+        l_residencia: historiaClinica.l_residencia || "",
+        ocupacion: historiaClinica.ocupacion || "",
+        motivo_consulta: historiaClinica.motivo_consulta || "",
+        narracion: historiaClinica.narracion || "",
+        antecedentes_enfermedad: historiaClinica.antecedentes_enfermedad || "",
+        alergias: historiaClinica.alergias || "",
+        antecedentes_fisiologicos: historiaClinica.antecedentes_fisiologicos || "",
+        antecedentes_patologicos: historiaClinica.antecedentes_patologicos || "",
+        antecedentes_quirurgicos: historiaClinica.antecedentes_quirurgicos || "",
+        antecedentes_farmacologicos: historiaClinica.antecedentes_farmacologicos || "",
+        madre_vive: historiaClinica.madre_vive || "",
+        madre_causa_fallecimiento: historiaClinica.madre_causa_fallecimiento || "",
+        madre_enfermedad: historiaClinica.madre_enfermedad || "",
+        padre_vive: historiaClinica.padre_vive || "",
+        padre_causa_fallecimiento: historiaClinica.padre_causa_fallecimiento || "",
+        padre_enfermedad: historiaClinica.padre_enfermedad || "",
+        hijos: historiaClinica.hijos || "0",
+        hermanos: historiaClinica.hermanos || "0",
+        h_alimentacion: historiaClinica.h_alimentacion || "",
+        h_diuresis: historiaClinica.h_diuresis || "",
+        h_catarsis: historiaClinica.h_catarsis || "",
+        h_sueño: historiaClinica.h_sueño || "",
+        h_alcohol_tabaco: historiaClinica.h_alcohol_tabaco || "",
+        h_infusiones: historiaClinica.h_infusiones || "",
+        h_farmacos: historiaClinica.h_farmacos || "",
+        obra_social: historiaClinica.obra_social || "",
+        material_casa: historiaClinica.material_casa || "",
+        electricidad: historiaClinica.electricidad || "",
+        agua: historiaClinica.agua || "",
+        toilet_privado: historiaClinica.toilet_privado || "",
+        calefaccion: historiaClinica.calefaccion || "",
+        mascotas: historiaClinica.mascotas || "",
+        otro: historiaClinica.otro || "",
+      });
+
+      setCantHijos(listaHijos.length);
+      setCantHermanos(listaHermanos.length);
+    }
+  }, [historiaClinica, listaHijos, listaHermanos])
+
+
+
+
+
+  // ----- FUNCIONES DE CREACION -----
 
   const handleChange = (campo: keyof typeof formData, valor: string) => {
     setFormData({ ...formData, [campo]: valor });
   };
 
   const handleCantidadHijos = (cant: number) => {
-    setCantHijos(cant);
+    setCantHijos(cant)
     const nuevaLista = Array.from({ length: cant }, (_, i) => ({
       id: i + 1,
       nota: listaHijos[i]?.nota || "",
       tipo: "hijo",
       historia_clinica_comun_id: -1,
     }));
-    setListaHijos(nuevaLista);
+    setListaHijos(nuevaLista)
   }
 
   const handleCantidadHermanos = (cant: number) => {
-    setCantHermanos(cant);
+    setCantHermanos(cant)
     const nuevaLista = Array.from({ length: cant }, (_, i) => ({
-      id: i + 1,
+      id: edit ? i + 1 : (i + 1) *-1, // id positiva si es en create, id negativa si es en edit
       nota: listaHermanos[i]?.nota || "",
       tipo: "hermano",
       historia_clinica_comun_id: 0,
     }));
-    setListaHermanos(nuevaLista);
+    setListaHermanos(nuevaLista)
   };
 
   const handleParienteNota = (
@@ -171,8 +532,8 @@ export default function CreateScreen() {
   };
 
   const agregarItem = () => {
-    setItemIdAux(itemIdAux+1)
-    console.log(itemIdAux)
+    setItemIdAux(itemIdAux-1)
+    console.log(" create : Item guardado con id aux : ",itemIdAux)
     setNuevoItem({ fecha:"", descripcion:"" })
     setModalVisible(true)
   }
@@ -186,6 +547,10 @@ export default function CreateScreen() {
         historia_clinica_comun_id: -1
       };
       setListaItems([item, ...listaItems])
+      // SI SE ESTA EDITANDO
+      if(edit == "true"){
+        setListaItemsEdit([item, ...listaItemsEdit]) // si se esta editando los copia aca tambien
+      }
       setModalVisible(false)
     } else {
       alert("Para guardarlo debe haber completado ambos campos.")
@@ -195,6 +560,20 @@ export default function CreateScreen() {
   const cancelarNuevoItem = () => {
     setNuevoItem({ fecha:"", descripcion:"" }) // limpia inputs
     setModalVisible(false)
+  }
+
+  const eliminarItem = (id: number | undefined) => {
+    if(id == undefined){
+      console.log(" create_edit : ERROR AL OBTENER LA ID DEL ITEM EN EL MODULO DE ELIMINAR")
+    } else {
+      setListaItems((prevLista) => prevLista.filter((item) => item.id !== id))
+      setItemIdAux((prev) => prev + 1)
+      if(id > 0){
+        setListaItemsIdsEliminadas([id, ...listaItemsIdsEliminadas]) // si es una id de DB, lo almacena para posible borrado
+      } else {
+        setListaItemsEdit((prevLista) => prevLista.filter((item) => item.id !== id)) // si es una id temporal, solo lo borra de lista temporal
+      }
+    }
   }
 
   const retroceder = () => {
@@ -224,6 +603,7 @@ export default function CreateScreen() {
   }
 
   const guardarDatos = async () => {
+    /*
     console.log(" ---------- FORM DATA ---------- ")
     console.log(formData)
     console.log(" ---------- ITEMS ---------- ")
@@ -232,6 +612,7 @@ export default function CreateScreen() {
     console.log(listaHijos)
     console.log(" ---------- HERMANOS ---------- ")
     console.log(listaHermanos)
+    */
 
     const reg_aux_id: {
       id_historia: number;
@@ -500,8 +881,25 @@ export default function CreateScreen() {
             ) : (
               listaItems.map((item) => (
                 <View key={item.id} style={styles.itemCard}>
-                  <Text style={styles.itemFecha}>{item.fecha}</Text>
-                  <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View>
+                      <Text style={styles.itemFecha}>{item.fecha}</Text>
+                      <Text style={styles.itemDescripcion}>{item.descripcion}</Text>
+                    </View>
+                    
+                    <TouchableOpacity onPress={() => {
+                      Alert.alert(
+                        "Confirmar",
+                        "¿Seguro que quieres eliminar este ítem?",
+                        [
+                          { text: "No", style: "cancel" },
+                          { text: "Sí", onPress: () => eliminarItem(item.id) }
+                        ]
+                      )
+                    }}>
+                      <Ionicons name="close-circle-outline" size={24} color={Colors.primary} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))
             )}
@@ -903,14 +1301,25 @@ export default function CreateScreen() {
                   return;
                 }
 
-                Alert.alert(
-                  "Confirmar",
-                  "¿Seguro que quieres guardar esta historia?",
-                  [
-                    { text: "No", style: "cancel" },
-                    { text: "Sí", onPress: () => guardarDatos() }
-                  ]
-                );
+                if (edit === "true"){
+                  Alert.alert(
+                    "Confirmar",
+                    "¿Seguro que quieres guardar esta historia editada?",
+                    [
+                      { text: "No", style: "cancel" },
+                      { text: "Sí", onPress: () => guardarDatosEditados() }
+                    ]
+                  );
+                } else {
+                  Alert.alert(
+                    "Confirmar",
+                    "¿Seguro que quieres guardar esta historia?",
+                    [
+                      { text: "No", style: "cancel" },
+                      { text: "Sí", onPress: () => guardarDatos() }
+                    ]
+                  );
+                }
               }}
             >
               <Text style={[styles.actionButtonText, { color: "white" }]}>Aceptar</Text>
@@ -925,13 +1334,24 @@ export default function CreateScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={['left', 'right', 'bottom']}>
-        <Stack.Screen
+
+        { edit === "true" ? (
+          <Stack.Screen
+            options={{
+              title: "Editar Historia Clínica",
+              headerBackVisible: false, // se elimina la flecha de retroceso
+              headerShown: true,
+            }}
+          />
+        ) : (
+          <Stack.Screen
             options={{
               title: "Crear Historia Clínica",
               headerBackVisible: false, // se elimina la flecha de retroceso
               headerShown: true,
             }}
-        />
+          />
+        )}
 
         <View style={{ flex: 1 }}>
           
@@ -1066,21 +1486,15 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 40,
   },
-
   actionButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
-    marginHorizontal: 5, // separa los botones
+    marginHorizontal: 5,
   },
-
   actionButtonText: {
     fontWeight: "bold",
     fontSize: 16,
   },
 });
-
-function useEffect(arg0: () => () => void, arg1: never[]) {
-  throw new Error("Function not implemented.");
-}
