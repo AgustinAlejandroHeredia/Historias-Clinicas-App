@@ -36,7 +36,7 @@ export const resetDatabase = async (): Promise<void> => {
         await db.execAsync('DROP TABLE IF EXISTS pariente')
         await db.execAsync('DROP TABLE IF EXISTS padres')
         await db.execAsync('DROP TABLE IF EXISTS historia_clinica_comun')
-        await db.execAsync('DROP TABLE IF EXISTS lt_items')
+        await db.execAsync('DROP TABLE IF EXISTS lt_item')
 
         console.log(' ---- Base de datos reseteada con exito. ---- ✅')
     } catch (error) {

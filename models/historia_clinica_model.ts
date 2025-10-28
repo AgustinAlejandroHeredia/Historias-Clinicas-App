@@ -14,7 +14,7 @@ export interface HistoriaClinicaComunModel {
     ocupacion: string;
     motivo_consulta: string;
     
-    narracion: string;
+    narracion?: string;
     
     antecedentes_enfermedad: string;
 

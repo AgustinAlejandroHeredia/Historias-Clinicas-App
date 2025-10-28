@@ -22,7 +22,7 @@ export const initDatabaseHistoriaClinica = async () => {
                 ocupacion TEXT NOT NULL,
                 motivo_consulta TEXT NOT NULL,
 
-                narracion TEXT NOT NULL,
+                narracion TEXT,
 
                 antecedentes_enfermedad TEXT NOT NULL,
 
@@ -130,7 +130,7 @@ export const agregarHistoriaClinica = async (
                 historiaData.l_residencia,
                 historiaData.ocupacion,
                 historiaData.motivo_consulta,
-                historiaData.narracion,
+                historiaData.narracion || null,
                 historiaData.antecedentes_enfermedad,
                 historiaData.alergias,
                 historiaData.antecedentes_fisiologicos,
@@ -378,7 +378,7 @@ export const actualizarHistoriaClinica = async (
         historiaData.l_residencia,
         historiaData.ocupacion,
         historiaData.motivo_consulta,
-        historiaData.narracion,
+        historiaData.narracion || null,
         historiaData.antecedentes_enfermedad,
         historiaData.alergias,
         historiaData.antecedentes_fisiologicos,

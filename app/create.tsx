@@ -193,7 +193,6 @@ export default function CreateScreen() {
     "l_residencia",
     "ocupacion",
     "motivo_consulta",
-    "narracion",
     "antecedentes_enfermedad",
     "alergias",
     "antecedentes_fisiologicos",
@@ -321,73 +320,76 @@ export default function CreateScreen() {
       }
 
       // se guarda la historia
-      actualizarHistoriaClinica(idNum, historiaEditada)
+      const result = await actualizarHistoriaClinica(idNum, historiaEditada)
       console.log("create_edit : Historia guardada ✅")
 
-      // se guardan los cambios en parientes
+      if(result.success){
 
-      // se hace un borrado definitivo de los items que se eliminaron (las ids que estan en listaItemsIdsEliminadas)
-      listaItemsIdsEliminadas.forEach((id) => {
-        eliminarItemPorId(id)
-        console.log("create_edit : Items esperando eliminacion eliminados ✅")
-      })
+        // se guardan los cambios en parientes
 
-      // deberia guardar los items que se hayan creado ahora
-      listaItemsEdit.forEach((item) => {
+        // se hace un borrado definitivo de los items que se eliminaron (las ids que estan en listaItemsIdsEliminadas)
+        listaItemsIdsEliminadas.forEach((id) => {
+          eliminarItemPorId(id)
+          console.log("create_edit : Items esperando eliminacion eliminados ✅")
+        })
 
-        const itemNuevo : ItemModel = {
-          fecha: item.fecha,
-          descripcion: item.descripcion,
-          historia_clinica_comun_id: idNum
+        // deberia guardar los items que se hayan creado ahora
+        listaItemsEdit.forEach((item) => {
+
+          const itemNuevo : ItemModel = {
+            fecha: item.fecha,
+            descripcion: item.descripcion,
+            historia_clinica_comun_id: idNum
+          }
+
+          agregarLineaTiempoItem(itemNuevo)
+
+          console.log("create_edit : Items guardados ✅")
+
+        })
+
+        // maneja la informacion de hijos actualizada
+          
+        // borra
+        // si hay menos elementos ahora que antes, borra de la db los que no coincidan
+        if(listaHijos.length < listaHijosEdit_DB.length){
+          for(let i = listaHijos.length ; i < listaHijosEdit_DB.length ; i++){
+            await eliminarParientePorId(listaHijosEdit_DB[i].id!)
+          }
+          setListaHijosEdit_DB(listaHijosEdit_DB.slice(0, listaHijos.length))
+          console.log("create_edit : Se eliminaron hijos")
+        }else{
+          console.log("create_edit : No se eliminaron hijos")
         }
 
-        agregarLineaTiempoItem(itemNuevo)
-
-        console.log("create_edit : Items guardados ✅")
-
-      })
-
-      // maneja la informacion de hijos actualizada
-        
-      // borra
-      // si hay menos elementos ahora que antes, borra de la db los que no coincidan
-      if(listaHijos.length < listaHijosEdit_DB.length){
-        for(let i = listaHijos.length ; i < listaHijosEdit_DB.length ; i++){
-          await eliminarParientePorId(listaHijosEdit_DB[i].id!)
+        // actualiza
+        // si la cantidad de elementos en listaHijosEdit_DB <= que listaHijos, debe actualizar los que coinciden
+        if(listaHijosEdit_DB.length > 0 && listaHijosEdit_DB.length <= listaHijos.length){
+          for(let i = 0 ; i<listaHijosEdit_DB.length ; i++){
+            await actualizarPariente(listaHijosEdit_DB[i].id!, listaHijos[i])
+          }
+          console.log("create_edit : Se actualizaron hijos")
+        }else{
+          console.log("create_edit : No se actualizaron hijos")
         }
-        setListaHijosEdit_DB(listaHijosEdit_DB.slice(0, listaHijos.length))
-        console.log("create_edit : Se eliminaron hijos")
-      }else{
-        console.log("create_edit : No se eliminaron hijos")
+
+        // agregar
+        // si listaHijos > listaHijosEdit_DB es que hay nuevos y debe almacenarlos en la DB
+        if(listaHijos.length > listaHijosEdit_DB.length){
+          for(let i = listaHijosEdit_DB.length; i < listaHijos.length; i++){
+            listaHijos[i].historia_clinica_comun_id = idNum
+            await agregarPariente(listaHijos[i])
+            console.log("create_edit : Se agregaro un hijo : ", listaHijos[i])
+          }
+        }else{
+          console.log("create_edit : No se agregaron hijos")
+        }
+
+        console.log("create_edit : Parientes guardados ✅")
+
+        console.log(" ---------- Todos los datos editados guardados con exito ✅ ---------- ")
+        retroceder()
       }
-
-      // actualiza
-      // si la cantidad de elementos en listaHijosEdit_DB <= que listaHijos, debe actualizar los que coinciden
-      if(listaHijosEdit_DB.length > 0 && listaHijosEdit_DB.length <= listaHijos.length){
-        for(let i = 0 ; i<listaHijosEdit_DB.length ; i++){
-          await actualizarPariente(listaHijosEdit_DB[i].id!, listaHijos[i])
-        }
-        console.log("create_edit : Se actualizaron hijos")
-      }else{
-        console.log("create_edit : No se actualizaron hijos")
-      }
-
-      // agregar
-      // si listaHijos > listaHijosEdit_DB es que hay nuevos y debe almacenarlos en la DB
-      if(listaHijos.length > listaHijosEdit_DB.length){
-        for(let i = listaHijosEdit_DB.length; i < listaHijos.length; i++){
-          listaHijos[i].historia_clinica_comun_id = idNum
-          await agregarPariente(listaHijos[i])
-          console.log("create_edit : Se agregaro un hijo : ", listaHijos[i])
-        }
-      }else{
-        console.log("create_edit : No se agregaron hijos")
-      }
-
-      console.log("create_edit : Parientes guardados ✅")
-
-      console.log(" ---------- Todos los datos editados guardados con exito ✅ ---------- ")
-      retroceder()
   
     } catch (error) {
       console.error("create_edit : Se produjo un error guardando los datos editandos ❌.")
@@ -948,7 +950,7 @@ export default function CreateScreen() {
 
             <CustomInput
                 big
-                placeholder="Haga una narración acorde a la linea de tiempo establecida previamente... *"
+                placeholder="Haga una narración acorde a la linea de tiempo establecida previamente... "
                 value={formData.narracion}
                 onChangeText={(text) => handleChange("narracion", text)}
             />
