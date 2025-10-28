@@ -1324,7 +1324,7 @@ export default function CreateScreen() {
                 }
               }}
             >
-              <Text style={[styles.actionButtonText, { color: "white" }]}>Aceptar</Text>
+              <Text style={[styles.actionButtonText, { color: "white" }]}>Guardar</Text>
             </TouchableOpacity>
           </View>
       </KeyboardAwareScrollView>

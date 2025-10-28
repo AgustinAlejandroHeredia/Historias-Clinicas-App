@@ -1,10 +1,11 @@
 import BuscadorHistorias from "@/components/BuscadorHistorias";
-import { obtenerHistoriasClinicas } from "@/db/historia_clinica_service";
+import { eliminarHistoriaClinica, obtenerHistoriasClinicas } from "@/db/historia_clinica_service";
 import { HistoriaClinicaListadoModel } from "@/models/historia_clinica_model";
 import { Colors } from "@/theme/colors";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 //import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -77,6 +78,31 @@ export default function Index() {
     router.push({ pathname: "/create", params: { id: id.toString(), edit: edit } })
   }
 
+  const eliminar = (id: number) => {
+    Alert.alert(
+      "Confirmar",
+      "¿Seguro que quieres eliminar esta historia editada?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Sí",
+          onPress: async () => {
+            try {
+              const res = await eliminarHistoriaClinica(id)
+              if (res.success) {
+                await cargarListado()
+              } else {
+                console.error("Error al eliminar historia ❌")
+              }
+            } catch (error) {
+              console.error("❌ Error eliminando historia:", error)
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const handleNueva = () => {
     if(isNavigating) return
     setIsNavigating(true)
@@ -108,12 +134,23 @@ export default function Index() {
               <Text style={styles.fecha}>{item.fecha_creacion}</Text>
               <Text style={styles.nombre}>{item.nombre}</Text>
             </View>
-            <Text style={styles.descripcion}>{item.motivo_consulta}</Text>
-            
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4 }}>
-              <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ paddingBottom: 9 }}>
-                <FontAwesome name="pencil-square-o" size={18} color={Colors.primary} />
-              </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start'}}>
+
+              <Text style={[styles.descripcion, { flex: 1 }]}>{item.motivo_consulta}</Text>
+              
+              <View style={{ flexDirection: 'column', alignItems: 'center', marginLeft: 8 }}>
+
+                <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ paddingBottom: 8, marginTop: 6 }}>
+                  <FontAwesome name="pencil-square-o" size={18} color={Colors.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => eliminar(item.id)}>
+                  <MaterialIcons name="delete-outline" size={23} color={Colors.eliminate} />
+                </TouchableOpacity>
+
+              </View>
+
             </View>
 
           </TouchableOpacity>
@@ -199,9 +236,10 @@ const styles = StyleSheet.create({
   },
   nombre: {
     fontWeight: 'bold',
+    marginLeft: 10,
   },
   descripcion: {
-    marginTop: 4,
+    marginTop: 1,
     color: '#555',
   },
 });
