@@ -23,3 +23,15 @@ export interface ParienteListaResult extends DatabaseResult {
     data?: ParienteListaModel[],
     count?: number
 }
+
+export interface ParientesListasRolesModel {
+    hijos?: ParienteModel[];
+    hermanos?: ParienteModel[];
+}
+
+export interface ParienteResultRoles extends DatabaseResult {
+    id?: number,
+    data?: ParientesListasRolesModel,
+    changes?: number;
+    message?: string;
+}
