@@ -8,22 +8,21 @@ import { ParienteListaResult, ParienteModel, ParienteResultRoles, ParientesLista
 import { generatePDF } from 'react-native-html-to-pdf'
 import { HistoriaCompleta, HistoriaCompletaResponse, PDFGenerationResult } from './pdf_models'
 
-const HISTORIA_CLINICA_TEMPLATE = `
-    <h1>Historia Clínica</h1>
-    <p><strong>Nombre:</strong></p>
-    <p><strong>Motivo de consulta:</strong></p>
-    <p><strong>Fecha:</strong></p>
-`
-
-const generarVistaPDF = () => {
-    return ``
+const generarVistaPDF = async (id: string) => {
+    const datos : HistoriaCompletaResponse = await obtenerDatos(id)
+    if(!datos.success){
+        throw new Error('generarVistaPDF : error al obtener los datos')
+    }
+    return `
+    
+    `
 }
 
-export const generarPDF = async (nombre: string): Promise<PDFGenerationResult> => {
+export const generarPDF = async (id: string, nombre: string): Promise<PDFGenerationResult> => {
     try{
 
         const options = {
-            html: generarVistaPDF(),
+            html: await generarVistaPDF(id),
             filename: sanitizeFileName(nombre),
             directory: 'Documents',
             base64: true,
