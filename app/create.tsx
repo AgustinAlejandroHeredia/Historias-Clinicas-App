@@ -674,7 +674,7 @@ export default function CreateScreen() {
       // envia a guardar la historia clinica
       const response_historia : HistoriaClinicaComunResult = await agregarHistoriaClinica(historiaNueva)
       if(!response_historia.success){
-        alert("Error cuardando la historia clinica :( (error : historia)")
+        alert("Error guardando la historia clinica :( (error : historia)")
         throw new Error("Error guardando historia");
       }
       reg_aux_id.id_historia=response_historia.id!
@@ -694,7 +694,7 @@ export default function CreateScreen() {
 
         // si falla
         if(!response_item.success){
-          alert("Error cuardando la historia clinica :( (error : item)")
+          alert("Error guardando la historia clinica :( (error : item)")
           // procede a borrar los que guardo si es que guardo alguno
           await eliminarItemsGuardados(reg_aux_id.id_items)
           await eliminarHistoriaClinica(reg_aux_id.id_historia)
@@ -719,7 +719,7 @@ export default function CreateScreen() {
 
         // si falla
         if(!response_pariente.success){
-          alert("Error cuardando la historia clinica :( (error : pariente)")
+          alert("Error guardando la historia clinica :( (error : pariente)")
           // procede a borrar los items y parientes que guardo, si guardo alguno
           await eliminarParientesGuardados(reg_aux_id.id_parientes)
           await eliminarItemsGuardados(reg_aux_id.id_items)

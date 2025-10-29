@@ -127,7 +127,7 @@ const generarHtml = async (id: number) => {
           line-height: 1.6;
         }
         h1, h2 {
-          color: #005a8d;
+          color: #901C9C;
         }
         table {
           width: 100%;
@@ -146,7 +146,7 @@ const generarHtml = async (id: number) => {
         .subtitulo {
           background: #f0f0f0;
           padding: 6px 10px;
-          border-left: 4px solid #005a8d;
+          border-left: 4px solid #901C9C;
           margin-bottom: 10px;
         }
         ul {

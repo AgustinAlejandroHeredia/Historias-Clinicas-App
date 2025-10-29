@@ -140,25 +140,21 @@ export default function Index() {
               <Text style={styles.nombre}>{item.nombre}</Text>
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start'}}>
+            <Text style={[styles.descripcion, { flex: 1 }]}>{item.motivo_consulta}</Text>
 
-              <Text style={[styles.descripcion, { flex: 1 }]}>{item.motivo_consulta}</Text>
-              
-              <View style={{ flexDirection: 'column', alignItems: 'center', marginLeft: 8 }}>
+            <View style={{ flexDirection: 'row-reverse', alignItems: 'center'}}>
 
-                <TouchableOpacity onPress={() => convertirPDF(item.id)} style={{ marginVertical: 6 }}>
-                  <FontAwesome6 name="file-pdf" size={18} color={Colors.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ marginVertical: 6 }}>
-                  <FontAwesome name="pencil-square-o" size={18} color={Colors.primary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => eliminar(item.id)}>
+                <TouchableOpacity onPress={() => eliminar(item.id)} style={{ }}>
                   <MaterialIcons name="delete-outline" size={23} color={Colors.eliminate} />
                 </TouchableOpacity>
 
-              </View>
+                <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ marginHorizontal: 10 }}>
+                  <FontAwesome name="pencil-square-o" size={18} color={Colors.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => convertirPDF(item.id)} style={{ marginRight: 5 }}>
+                  <FontAwesome6 name="file-pdf" size={18} color={Colors.primary} />
+                </TouchableOpacity>
 
             </View>
 
