@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "historias_clinicas",
+    "name": "Historias Clínicas Móvil",
     "slug": "historias_clinicas",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -44,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9502b328-fb23-4661-abbb-50ec5fd74df2"
+      }
     }
   }
 }
