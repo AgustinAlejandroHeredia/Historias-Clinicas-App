@@ -8,7 +8,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 //import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
+import { generarPDF } from "@/pdf/pdf_service";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 
 export default function Index() {
 
@@ -107,9 +109,12 @@ export default function Index() {
     if(isNavigating) return
     setIsNavigating(true)
     router.push({ pathname: "/create", params: { id: -1, edit: "false" } })
-    //router.push("/create")
     setTimeout(() => setIsNavigating(false), 1000);
   };
+
+  const convertirPDF = (id: number) => {
+    generarPDF(id)
+  }
 
 
 
@@ -141,7 +146,11 @@ export default function Index() {
               
               <View style={{ flexDirection: 'column', alignItems: 'center', marginLeft: 8 }}>
 
-                <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ paddingBottom: 8, marginTop: 6 }}>
+                <TouchableOpacity onPress={() => convertirPDF(item.id)} style={{ marginVertical: 6 }}>
+                  <FontAwesome6 name="file-pdf" size={18} color={Colors.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => editarHistoria(item.id, "true")} style={{ marginVertical: 6 }}>
                   <FontAwesome name="pencil-square-o" size={18} color={Colors.primary} />
                 </TouchableOpacity>
 

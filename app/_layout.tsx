@@ -45,75 +45,85 @@ export default function RootLayout() {
   const router = useRouter()
 
   const abrirOpciones = () => {
-    router.push("/options")
+    const activado = false
+    if(activado){
+      router.push("/options")
+    } else {
+      alert("Función desactivada temporalmente. :(")
+    }
   }
 
+  /* 
+  
+  Por ahora se va comentado hasta que funcione
+  
+  <Stack
+      screenOptions={{
+        headerLeft: () => null ,
+        headerRight: () => (
+          <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+            <Octicons name="gear" size={20} color="black" />
+          </TouchableOpacity>
+        ),
+      }}
+    >
+  
+  
+  */
+
   return (
-    <Stack>
+    
+    <Stack
+      screenOptions={{
+        headerLeft: () => null ,
+        headerRight: () => (
+          <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+            <Octicons name="gear" size={20} color="black" />
+          </TouchableOpacity>
+        ),
+      }}
+    >
 
       <Stack.Screen 
         name="index" 
         options={{ 
-          title: "Home", 
-          headerLeft: () => null ,
-          headerRight: () => (
-            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
-              {/*<Ionicons name="ellipsis-vertical" size={24} color="black" />*/}
-              <Octicons name="gear" size={20} color="black" />
-            </TouchableOpacity>
-          ),
+          title: "Home"
         }} 
       />
 
       <Stack.Screen 
         name="create" 
         options={{ 
-          title: "Nueva Historia Clínica", 
-          headerLeft: () => null,
-          headerRight: () => (
-            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
-              {/*<Ionicons name="ellipsis-vertical" size={24} color="black" />*/}
-              <Octicons name="gear" size={20} color="black" />
-            </TouchableOpacity>
-          ),
+          title: "Nueva Historia Clínica"
         }} 
       />
       
       <Stack.Screen 
         name="view" 
         options={{ 
-          title: "Ver Historia Clínica", 
-          headerLeft: () => null, 
-          headerRight: () => (
-            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
-              {/*<Ionicons name="ellipsis-vertical" size={20} color="black" />*/}
-              <Octicons name="gear" size={20} color="black" />
-            </TouchableOpacity>
-          ),
-        }} 
-      />
-
-      <Stack.Screen 
-        name="edit" 
-        options={{ 
-          title: "Editar historia clinica", 
-          headerLeft: () => null ,
-          headerRight: () => (
-            <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
-              {/*<Ionicons name="ellipsis-vertical" size={24} color="black" />*/}
-              <Octicons name="gear" size={20} color="black" />
-            </TouchableOpacity>
-          ),
+          title: "Ver Historia Clínica"
         }} 
       />
 
       <Stack.Screen 
         name="options" 
         options={{ 
-          title: "Opciones", 
-          headerLeft: () => null
+          title: "Opciones"
         }} 
       />
     </Stack>
+    
+    /*
+    <Stack
+      screenOptions={{
+        headerLeft: () => null,
+        headerRight: () => (
+          <TouchableOpacity onPress={abrirOpciones} style={{ marginRight: 15 }}>
+            <Octicons name="gear" size={20} color="black" />
+          </TouchableOpacity>
+        ),
+      }}
+    />
+    */
   );
 }
