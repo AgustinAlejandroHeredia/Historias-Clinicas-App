@@ -39,6 +39,7 @@ export const DateInput: React.FC<DateInputProps> = ({ value, onChangeText, ...pr
       onChangeText={handleChange}
       keyboardType="numeric"
       placeholder="dd/mm/yyyy"
+      placeholderTextColor='#666'
     />
   );
 };

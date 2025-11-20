@@ -1,9 +1,8 @@
 import { resetDatabase } from "@/db/database";
 import { initDatabases } from "@/db/init_databases";
-import Octicons from '@expo/vector-icons/Octicons';
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
@@ -49,7 +48,7 @@ export default function RootLayout() {
     if(activado){
       router.push("/options")
     } else {
-      alert("Función desactivada temporalmente. :(")
+      alert("Función desactivada temporalmente.")
     }
   }
 
@@ -57,72 +56,63 @@ export default function RootLayout() {
   
   Por ahora se va comentado hasta que funcione
   
-  <Stack
-      screenOptions={{
-        headerLeft: () => null ,
-        headerRight: () => (
-          <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
-            <Octicons name="gear" size={20} color="black" />
-          </TouchableOpacity>
-        ),
-      }}
-    >
+        <Stack
+          screenOptions={{
+            headerLeft: () => null ,
+            headerRight: () => (
+              <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
+                <Octicons name="gear" size={20} color="black" />
+              </TouchableOpacity>
+            ),
+          }}
+        >
   
   */
 
   return (
     
-    <Stack
-      screenOptions={{
-        headerLeft: () => null ,
-        headerRight: () => (
-          <TouchableOpacity onPress={() => abrirOpciones()} style={{ marginRight: 15 }}>
-            <Octicons name="gear" size={20} color="black" />
-          </TouchableOpacity>
-        ),
-      }}
-    >
+        <Stack>
 
-      <Stack.Screen 
-        name="index" 
-        options={{ 
-          title: "Home"
-        }} 
-      />
+          <Stack.Screen 
+            name="index" 
+            options={{ 
+              title: "Home"
+            }} 
+          />
 
-      <Stack.Screen 
-        name="create" 
-        options={{ 
-          title: "Nueva Historia Clínica"
-        }} 
-      />
-      
-      <Stack.Screen 
-        name="view" 
-        options={{ 
-          title: "Ver Historia Clínica"
-        }} 
-      />
+          <Stack.Screen 
+            name="create" 
+            options={{ 
+              title: "Nueva Historia Clínica"
+            }} 
+          />
+          
+          <Stack.Screen 
+            name="view" 
+            options={{ 
+              title: "Ver Historia Clínica"
+            }} 
+          />
 
-      <Stack.Screen 
-        name="options" 
-        options={{ 
-          title: "Opciones"
-        }} 
-      />
-    </Stack>
-    
-    /*
-    <Stack
-      screenOptions={{
-        headerLeft: () => null,
-        headerRight: () => (
-          <TouchableOpacity onPress={abrirOpciones} style={{ marginRight: 15 }}>
-            <Octicons name="gear" size={20} color="black" />
-          </TouchableOpacity>
-        ),
-      }}
-    />
-    */
+          <Stack.Screen 
+            name="options" 
+            options={{ 
+              title: "Opciones"
+            }} 
+          />
+        </Stack>
+        
+        /*
+        <Stack
+          screenOptions={{
+            headerLeft: () => null,
+            headerRight: () => (
+              <TouchableOpacity onPress={abrirOpciones} style={{ marginRight: 15 }}>
+                <Octicons name="gear" size={20} color="black" />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        */
   );
 }

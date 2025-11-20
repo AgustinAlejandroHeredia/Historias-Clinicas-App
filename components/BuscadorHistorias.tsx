@@ -34,6 +34,7 @@ export default function BuscadorHistorias({ historias, onFiltrar }: BuscadorHist
       <TextInput
         style={styles.input}
         placeholder="Buscar por nombre o fecha..."
+        placeholderTextColor='#666'
         value={busqueda}
         onChangeText={setBusqueda}
       />

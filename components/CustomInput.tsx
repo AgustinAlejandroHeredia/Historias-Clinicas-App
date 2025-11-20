@@ -46,6 +46,7 @@ export const CustomInput: React.FC<CustomInputProps> = ({
       multiline={!!(small || mid || big)}
       numberOfLines={lines}
       textAlignVertical={small || mid || big ? "top" : "center"}
+      placeholderTextColor='#666'
     />
   );
 };

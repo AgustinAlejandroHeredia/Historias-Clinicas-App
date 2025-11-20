@@ -40,7 +40,8 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -51,6 +52,12 @@
       "eas": {
         "projectId": "9502b328-fb23-4661-abbb-50ec5fd74df2"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9502b328-fb23-4661-abbb-50ec5fd74df2"
     }
   }
 }

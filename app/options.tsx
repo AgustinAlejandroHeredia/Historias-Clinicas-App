@@ -53,6 +53,7 @@ export default function Index() {
                     }}>
                         <CustomInput
                             placeholder="Ejemplo : #aa55c6"
+                            placeholderTextColor='#666'
                             value={inputNuevoColor}
                             onChangeText={(codigoColor) => setInputNuevoColor(codigoColor)}
                             style={{ flex: 1, paddingVertical: 8, marginRight: 15 }}
